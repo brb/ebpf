@@ -458,6 +458,20 @@ func (s *Spec) Datasec(name string) (*Map, error) {
 	return &m, nil
 }
 
+// TODO
+func (s *Spec) Iterate(fn func(Type), filterType Type) {
+	var wanted = reflect.TypeOf(filterType)
+
+	for _, types := range s.namedTypes {
+		for _, typ := range types {
+			if reflect.TypeOf(typ) != wanted {
+				continue
+			}
+			fn(typ)
+		}
+	}
+}
+
 // FindType searches for a type with a specific name.
 //
 // hint determines the type of the returned Type.

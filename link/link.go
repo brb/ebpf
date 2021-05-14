@@ -5,10 +5,10 @@ import (
 	"unsafe"
 
 	"github.com/cilium/ebpf"
-	"github.com/cilium/ebpf/internal"
+	"github.com/cilium/ebpf/intern"
 )
 
-var ErrNotSupported = internal.ErrNotSupported
+var ErrNotSupported = intern.ErrNotSupported
 
 // Link represents a Program attached to a BPF hook.
 type Link interface {
@@ -63,7 +63,7 @@ type RawLinkInfo struct {
 // You should consider using the higher level interfaces in this
 // package instead.
 type RawLink struct {
-	fd         *internal.FD
+	fd         *intern.FD
 	pinnedPath string
 }
 
@@ -74,12 +74,12 @@ func AttachRawLink(opts RawLinkOptions) (*RawLink, error) {
 	}
 
 	if opts.Target < 0 {
-		return nil, fmt.Errorf("invalid target: %s", internal.ErrClosedFd)
+		return nil, fmt.Errorf("invalid target: %s", intern.ErrClosedFd)
 	}
 
 	progFd := opts.Program.FD()
 	if progFd < 0 {
-		return nil, fmt.Errorf("invalid program: %s", internal.ErrClosedFd)
+		return nil, fmt.Errorf("invalid program: %s", intern.ErrClosedFd)
 	}
 
 	attr := bpfLinkCreateAttr{
@@ -100,7 +100,7 @@ func AttachRawLink(opts RawLinkOptions) (*RawLink, error) {
 // Returns an error if the pinned link type doesn't match linkType. Pass
 // UnspecifiedType to disable this behaviour.
 func LoadPinnedRawLink(fileName string, linkType Type, opts *ebpf.LoadPinOptions) (*RawLink, error) {
-	fd, err := internal.BPFObjGet(fileName, opts.Marshal())
+	fd, err := intern.BPFObjGet(fileName, opts.Marshal())
 	if err != nil {
 		return nil, fmt.Errorf("load pinned link: %w", err)
 	}
@@ -147,7 +147,7 @@ func (l *RawLink) Close() error {
 // Calling Close on a pinned Link will not break the link
 // until the pin is removed.
 func (l *RawLink) Pin(fileName string) error {
-	if err := internal.Pin(l.pinnedPath, fileName, l.fd); err != nil {
+	if err := intern.Pin(l.pinnedPath, fileName, l.fd); err != nil {
 		return err
 	}
 	l.pinnedPath = fileName
@@ -156,7 +156,7 @@ func (l *RawLink) Pin(fileName string) error {
 
 // Unpin implements the Link interface.
 func (l *RawLink) Unpin() error {
-	if err := internal.Unpin(l.pinnedPath); err != nil {
+	if err := intern.Unpin(l.pinnedPath); err != nil {
 		return err
 	}
 	l.pinnedPath = ""
@@ -181,14 +181,14 @@ type RawLinkUpdateOptions struct {
 func (l *RawLink) UpdateArgs(opts RawLinkUpdateOptions) error {
 	newFd := opts.New.FD()
 	if newFd < 0 {
-		return fmt.Errorf("invalid program: %s", internal.ErrClosedFd)
+		return fmt.Errorf("invalid program: %s", intern.ErrClosedFd)
 	}
 
 	var oldFd int
 	if opts.Old != nil {
 		oldFd = opts.Old.FD()
 		if oldFd < 0 {
-			return fmt.Errorf("invalid replacement program: %s", internal.ErrClosedFd)
+			return fmt.Errorf("invalid replacement program: %s", intern.ErrClosedFd)
 		}
 	}
 
@@ -216,7 +216,7 @@ type bpfLinkInfo struct {
 // Info returns metadata about the link.
 func (l *RawLink) Info() (*RawLinkInfo, error) {
 	var info bpfLinkInfo
-	err := internal.BPFObjGetInfoByFD(l.fd, unsafe.Pointer(&info), unsafe.Sizeof(info))
+	err := intern.BPFObjGetInfoByFD(l.fd, unsafe.Pointer(&info), unsafe.Sizeof(info))
 	if err != nil {
 		return nil, fmt.Errorf("link info: %s", err)
 	}

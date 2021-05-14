@@ -10,7 +10,7 @@ import (
 	"runtime"
 	"unsafe"
 
-	"github.com/cilium/ebpf/internal"
+	"github.com/cilium/ebpf/intern"
 )
 
 // marshalPtr converts an arbitrary value into a pointer suitable
@@ -18,17 +18,17 @@ import (
 //
 // As an optimization, it returns the original value if it is an
 // unsafe.Pointer.
-func marshalPtr(data interface{}, length int) (internal.Pointer, error) {
+func marshalPtr(data interface{}, length int) (intern.Pointer, error) {
 	if ptr, ok := data.(unsafe.Pointer); ok {
-		return internal.NewPointer(ptr), nil
+		return intern.NewPointer(ptr), nil
 	}
 
 	buf, err := marshalBytes(data, length)
 	if err != nil {
-		return internal.Pointer{}, err
+		return intern.Pointer{}, err
 	}
 
-	return internal.NewSlicePointer(buf), nil
+	return intern.NewSlicePointer(buf), nil
 }
 
 // marshalBytes converts an arbitrary value into a byte buffer.
@@ -52,7 +52,7 @@ func marshalBytes(data interface{}, length int) (buf []byte, err error) {
 		err = fmt.Errorf("can't marshal %T", value)
 	default:
 		var wr bytes.Buffer
-		err = binary.Write(&wr, internal.NativeEndian, value)
+		err = binary.Write(&wr, intern.NativeEndian, value)
 		if err != nil {
 			err = fmt.Errorf("encoding %T: %v", value, err)
 		}
@@ -68,13 +68,13 @@ func marshalBytes(data interface{}, length int) (buf []byte, err error) {
 	return buf, nil
 }
 
-func makeBuffer(dst interface{}, length int) (internal.Pointer, []byte) {
+func makeBuffer(dst interface{}, length int) (intern.Pointer, []byte) {
 	if ptr, ok := dst.(unsafe.Pointer); ok {
-		return internal.NewPointer(ptr), nil
+		return intern.NewPointer(ptr), nil
 	}
 
 	buf := make([]byte, length)
-	return internal.NewSlicePointer(buf), buf
+	return intern.NewSlicePointer(buf), buf
 }
 
 // unmarshalBytes converts a byte buffer into an arbitrary value.
@@ -112,7 +112,7 @@ func unmarshalBytes(data interface{}, buf []byte) error {
 		return errors.New("require pointer to []byte")
 	default:
 		rd := bytes.NewReader(buf)
-		if err := binary.Read(rd, internal.NativeEndian, value); err != nil {
+		if err := binary.Read(rd, intern.NativeEndian, value); err != nil {
 			return fmt.Errorf("decoding %T: %v", value, err)
 		}
 		return nil
@@ -125,21 +125,21 @@ func unmarshalBytes(data interface{}, buf []byte) error {
 // Values are initialized to zero if the slice has less elements than CPUs.
 //
 // slice must have a type like []elementType.
-func marshalPerCPUValue(slice interface{}, elemLength int) (internal.Pointer, error) {
+func marshalPerCPUValue(slice interface{}, elemLength int) (intern.Pointer, error) {
 	sliceType := reflect.TypeOf(slice)
 	if sliceType.Kind() != reflect.Slice {
-		return internal.Pointer{}, errors.New("per-CPU value requires slice")
+		return intern.Pointer{}, errors.New("per-CPU value requires slice")
 	}
 
-	possibleCPUs, err := internal.PossibleCPUs()
+	possibleCPUs, err := intern.PossibleCPUs()
 	if err != nil {
-		return internal.Pointer{}, err
+		return intern.Pointer{}, err
 	}
 
 	sliceValue := reflect.ValueOf(slice)
 	sliceLen := sliceValue.Len()
 	if sliceLen > possibleCPUs {
-		return internal.Pointer{}, fmt.Errorf("per-CPU value exceeds number of CPUs")
+		return intern.Pointer{}, fmt.Errorf("per-CPU value exceeds number of CPUs")
 	}
 
 	alignedElemLength := align(elemLength, 8)
@@ -149,14 +149,14 @@ func marshalPerCPUValue(slice interface{}, elemLength int) (internal.Pointer, er
 		elem := sliceValue.Index(i).Interface()
 		elemBytes, err := marshalBytes(elem, elemLength)
 		if err != nil {
-			return internal.Pointer{}, err
+			return intern.Pointer{}, err
 		}
 
 		offset := i * alignedElemLength
 		copy(buf[offset:offset+elemLength], elemBytes)
 	}
 
-	return internal.NewSlicePointer(buf), nil
+	return intern.NewSlicePointer(buf), nil
 }
 
 // unmarshalPerCPUValue decodes a buffer into a slice containing one value per
@@ -169,7 +169,7 @@ func unmarshalPerCPUValue(slicePtr interface{}, elemLength int, buf []byte) erro
 		return fmt.Errorf("per-cpu value requires pointer to slice")
 	}
 
-	possibleCPUs, err := internal.PossibleCPUs()
+	possibleCPUs, err := intern.PossibleCPUs()
 	if err != nil {
 		return err
 	}

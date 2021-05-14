@@ -11,9 +11,9 @@ import (
 
 	"github.com/cilium/ebpf"
 	"github.com/cilium/ebpf/asm"
-	"github.com/cilium/ebpf/internal"
-	"github.com/cilium/ebpf/internal/testutils"
-	"github.com/cilium/ebpf/internal/unix"
+	"github.com/cilium/ebpf/intern"
+	"github.com/cilium/ebpf/intern/testutils"
+	"github.com/cilium/ebpf/intern/unix"
 )
 
 var (
@@ -283,7 +283,7 @@ func TestCreatePerfEvent(t *testing.T) {
 func TestReadRecord(t *testing.T) {
 	var buf bytes.Buffer
 
-	err := binary.Write(&buf, internal.NativeEndian, &perfEventHeader{})
+	err := binary.Write(&buf, intern.NativeEndian, &perfEventHeader{})
 	if err != nil {
 		t.Fatal(err)
 	}

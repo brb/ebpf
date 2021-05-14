@@ -4,7 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/cilium/ebpf/internal/testutils"
+	"github.com/cilium/ebpf/intern/testutils"
 	qt "github.com/frankban/quicktest"
 )
 

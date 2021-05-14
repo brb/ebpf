@@ -6,7 +6,7 @@ import (
 
 	"github.com/cilium/ebpf"
 	"github.com/cilium/ebpf/asm"
-	"github.com/cilium/ebpf/internal/testutils"
+	"github.com/cilium/ebpf/intern/testutils"
 )
 
 func TestSkLookup(t *testing.T) {

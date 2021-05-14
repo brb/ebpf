@@ -13,8 +13,8 @@ import (
 	"unsafe"
 
 	"github.com/cilium/ebpf"
-	"github.com/cilium/ebpf/internal"
-	"github.com/cilium/ebpf/internal/unix"
+	"github.com/cilium/ebpf/intern"
+	"github.com/cilium/ebpf/intern/unix"
 )
 
 var (
@@ -204,7 +204,7 @@ func pmuProbe(typ probeType, symbol, path string, offset uint64, ret bool) (*per
 		attr = unix.PerfEventAttr{
 			// The minimum size required for PMU uprobes is PERF_ATTR_SIZE_VER1,
 			// since it added the config2 (Ext2) field. The Size field controls the
-			// size of the internal buffer the kernel allocates for reading the
+			// size of the intern buffer the kernel allocates for reading the
 			// perf_event_attr argument from userspace.
 			Size:   unix.PERF_ATTR_SIZE_VER1,
 			Type:   uint32(et),          // PMU event type read from sysfs
@@ -231,7 +231,7 @@ func pmuProbe(typ probeType, symbol, path string, offset uint64, ret bool) (*per
 
 	// Kernel has perf_[k,u]probe PMU available, initialize perf event.
 	return &perfEvent{
-		fd:    internal.NewFD(uint32(fd)),
+		fd:    intern.NewFD(uint32(fd)),
 		pmuID: et,
 		name:  symbol,
 		typ:   typ.PerfEventType(ret),

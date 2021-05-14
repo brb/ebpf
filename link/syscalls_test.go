@@ -3,7 +3,7 @@ package link
 import (
 	"testing"
 
-	"github.com/cilium/ebpf/internal/testutils"
+	"github.com/cilium/ebpf/intern/testutils"
 )
 
 func TestHaveProgAttach(t *testing.T) {

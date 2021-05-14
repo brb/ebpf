@@ -23,7 +23,7 @@ TARGETS := \
 	testdata/invalid_map_static \
 	testdata/initialized_btf_map \
 	testdata/strings \
-	internal/btf/testdata/relocs
+	intern/btf/testdata/relocs
 
 .PHONY: all clean docker-all docker-shell
 
@@ -45,7 +45,7 @@ docker-shell:
 
 clean:
 	-$(RM) testdata/*.elf
-	-$(RM) internal/btf/testdata/*.elf
+	-$(RM) intern/btf/testdata/*.elf
 
 all: $(addsuffix -el.elf,$(TARGETS)) $(addsuffix -eb.elf,$(TARGETS))
 
@@ -63,6 +63,6 @@ testdata/loader-%-eb.elf: testdata/loader.c
 
 # Usage: make VMLINUX=/path/to/vmlinux vmlinux-btf
 .PHONY: vmlinux-btf
-vmlinux-btf: internal/btf/testdata/vmlinux-btf.gz
-internal/btf/testdata/vmlinux-btf.gz: $(VMLINUX)
+vmlinux-btf: intern/btf/testdata/vmlinux-btf.gz
+intern/btf/testdata/vmlinux-btf.gz: $(VMLINUX)
 	objcopy --dump-section .BTF=/dev/stdout "$<" /dev/null | gzip > "$@"

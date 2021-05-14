@@ -7,9 +7,9 @@ import (
 	"testing"
 
 	"github.com/cilium/ebpf/asm"
-	"github.com/cilium/ebpf/internal"
-	"github.com/cilium/ebpf/internal/testutils"
-	"github.com/cilium/ebpf/internal/unix"
+	"github.com/cilium/ebpf/intern"
+	"github.com/cilium/ebpf/intern/testutils"
+	"github.com/cilium/ebpf/intern/unix"
 )
 
 func TestMapInfoFromProc(t *testing.T) {
@@ -86,7 +86,7 @@ func TestProgramInfo(t *testing.T) {
 	prog := createSocketFilter(t)
 	defer prog.Close()
 
-	for name, fn := range map[string]func(*internal.FD) (*ProgramInfo, error){
+	for name, fn := range map[string]func(*intern.FD) (*ProgramInfo, error){
 		"generic": newProgramInfoFromFd,
 		"proc":    newProgramInfoFromProc,
 	} {

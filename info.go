@@ -11,7 +11,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/cilium/ebpf/internal"
+	"github.com/cilium/ebpf/intern"
 )
 
 // MapInfo describes a map.
@@ -26,7 +26,7 @@ type MapInfo struct {
 	Name string
 }
 
-func newMapInfoFromFd(fd *internal.FD) (*MapInfo, error) {
+func newMapInfoFromFd(fd *intern.FD) (*MapInfo, error) {
 	info, err := bpfGetMapInfoByFD(fd)
 	if errors.Is(err, syscall.EINVAL) {
 		return newMapInfoFromProc(fd)
@@ -43,11 +43,11 @@ func newMapInfoFromFd(fd *internal.FD) (*MapInfo, error) {
 		info.max_entries,
 		info.map_flags,
 		// name is available from 4.15.
-		internal.CString(info.name[:]),
+		intern.CString(info.name[:]),
 	}, nil
 }
 
-func newMapInfoFromProc(fd *internal.FD) (*MapInfo, error) {
+func newMapInfoFromProc(fd *intern.FD) (*MapInfo, error) {
 	var mi MapInfo
 	err := scanFdInfo(fd, map[string]interface{}{
 		"map_type":    &mi.Type,
@@ -91,7 +91,7 @@ type ProgramInfo struct {
 	stats *programStats
 }
 
-func newProgramInfoFromFd(fd *internal.FD) (*ProgramInfo, error) {
+func newProgramInfoFromFd(fd *intern.FD) (*ProgramInfo, error) {
 	info, err := bpfGetProgInfoByFD(fd)
 	if errors.Is(err, syscall.EINVAL) {
 		return newProgramInfoFromProc(fd)
@@ -106,7 +106,7 @@ func newProgramInfoFromFd(fd *internal.FD) (*ProgramInfo, error) {
 		// tag is available if the kernel supports BPF_PROG_GET_INFO_BY_FD.
 		Tag: hex.EncodeToString(info.tag[:]),
 		// name is available from 4.15.
-		Name: internal.CString(info.name[:]),
+		Name: intern.CString(info.name[:]),
 		stats: &programStats{
 			runtime:  time.Duration(info.run_time_ns),
 			runCount: info.run_cnt,
@@ -114,16 +114,16 @@ func newProgramInfoFromFd(fd *internal.FD) (*ProgramInfo, error) {
 	}, nil
 }
 
-func newProgramInfoFromProc(fd *internal.FD) (*ProgramInfo, error) {
+func newProgramInfoFromProc(fd *intern.FD) (*ProgramInfo, error) {
 	var info ProgramInfo
 	err := scanFdInfo(fd, map[string]interface{}{
 		"prog_type": &info.Type,
 		"prog_tag":  &info.Tag,
 	})
 	if errors.Is(err, errMissingFields) {
-		return nil, &internal.UnsupportedFeatureError{
+		return nil, &intern.UnsupportedFeatureError{
 			Name:           "reading program info from /proc/self/fdinfo",
-			MinimumVersion: internal.Version{4, 10, 0},
+			MinimumVersion: intern.Version{4, 10, 0},
 		}
 	}
 	if err != nil {
@@ -164,7 +164,7 @@ func (pi *ProgramInfo) Runtime() (time.Duration, bool) {
 	return time.Duration(0), false
 }
 
-func scanFdInfo(fd *internal.FD, fields map[string]interface{}) error {
+func scanFdInfo(fd *intern.FD, fields map[string]interface{}) error {
 	raw, err := fd.Value()
 	if err != nil {
 		return err
@@ -227,11 +227,11 @@ func scanFdInfoReader(r io.Reader, fields map[string]interface{}) error {
 //
 // Requires at least 5.8.
 func EnableStats(which uint32) (io.Closer, error) {
-	attr := internal.BPFEnableStatsAttr{
+	attr := intern.BPFEnableStatsAttr{
 		StatsType: which,
 	}
 
-	fd, err := internal.BPFEnableStats(&attr)
+	fd, err := intern.BPFEnableStats(&attr)
 	if err != nil {
 		return nil, err
 	}

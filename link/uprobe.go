@@ -10,7 +10,7 @@ import (
 	"sync"
 
 	"github.com/cilium/ebpf"
-	"github.com/cilium/ebpf/internal"
+	"github.com/cilium/ebpf/intern"
 )
 
 var (
@@ -51,7 +51,7 @@ func OpenExecutable(path string) (*Executable, error) {
 	}
 	defer f.Close()
 
-	se, err := internal.NewSafeELFFile(f)
+	se, err := intern.NewSafeELFFile(f)
 	if err != nil {
 		return nil, fmt.Errorf("parse ELF file: %w", err)
 	}

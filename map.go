@@ -8,9 +8,9 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/cilium/ebpf/internal"
-	"github.com/cilium/ebpf/internal/btf"
-	"github.com/cilium/ebpf/internal/unix"
+	"github.com/cilium/ebpf/intern"
+	"github.com/cilium/ebpf/intern/btf"
+	"github.com/cilium/ebpf/intern/unix"
 )
 
 // Errors returned by Map and MapIterator methods.
@@ -125,7 +125,7 @@ func (ms *MapSpec) checkCompatibility(m *Map) error {
 // if you require custom encoding.
 type Map struct {
 	name       string
-	fd         *internal.FD
+	fd         *intern.FD
 	typ        MapType
 	keySize    uint32
 	valueSize  uint32
@@ -144,10 +144,10 @@ func NewMapFromFD(fd int) (*Map, error) {
 		return nil, errors.New("invalid fd")
 	}
 
-	return newMapFromFD(internal.NewFD(uint32(fd)))
+	return newMapFromFD(intern.NewFD(uint32(fd)))
 }
 
-func newMapFromFD(fd *internal.FD) (*Map, error) {
+func newMapFromFD(fd *intern.FD) (*Map, error) {
 	info, err := newMapInfoFromFd(fd)
 	if err != nil {
 		fd.Close()
@@ -217,7 +217,7 @@ func newMapWithOptions(spec *MapSpec, opts MapOptions, handles *handleCache) (_ 
 		return nil, fmt.Errorf("pin type %d: %w", int(spec.Pinning), ErrNotSupported)
 	}
 
-	var innerFd *internal.FD
+	var innerFd *intern.FD
 	if spec.Type == ArrayOfMaps || spec.Type == HashOfMaps {
 		if spec.InnerMap == nil {
 			return nil, fmt.Errorf("%s requires InnerMap", spec.Type)
@@ -252,7 +252,7 @@ func newMapWithOptions(spec *MapSpec, opts MapOptions, handles *handleCache) (_ 
 	return m, nil
 }
 
-func createMap(spec *MapSpec, inner *internal.FD, opts MapOptions, handles *handleCache) (_ *Map, err error) {
+func createMap(spec *MapSpec, inner *intern.FD, opts MapOptions, handles *handleCache) (_ *Map, err error) {
 	closeOnError := func(closer io.Closer) {
 		if err != nil {
 			closer.Close()
@@ -286,7 +286,7 @@ func createMap(spec *MapSpec, inner *internal.FD, opts MapOptions, handles *hand
 		spec.ValueSize = 4
 
 		if spec.MaxEntries == 0 {
-			n, err := internal.PossibleCPUs()
+			n, err := intern.PossibleCPUs()
 			if err != nil {
 				return nil, fmt.Errorf("perf event array: %w", err)
 			}
@@ -366,7 +366,7 @@ func createMap(spec *MapSpec, inner *internal.FD, opts MapOptions, handles *hand
 	return m, nil
 }
 
-func newMap(fd *internal.FD, name string, typ MapType, keySize, valueSize, maxEntries, flags uint32) (*Map, error) {
+func newMap(fd *intern.FD, name string, typ MapType, keySize, valueSize, maxEntries, flags uint32) (*Map, error) {
 	m := &Map{
 		name,
 		fd,
@@ -383,7 +383,7 @@ func newMap(fd *internal.FD, name string, typ MapType, keySize, valueSize, maxEn
 		return m, nil
 	}
 
-	possibleCPUs, err := internal.PossibleCPUs()
+	possibleCPUs, err := intern.PossibleCPUs()
 	if err != nil {
 		return nil, err
 	}
@@ -467,7 +467,7 @@ func (m *Map) LookupAndDelete(key, valueOut interface{}) error {
 // Returns a nil value if a key doesn't exist.
 func (m *Map) LookupBytes(key interface{}) ([]byte, error) {
 	valueBytes := make([]byte, m.fullValueSize)
-	valuePtr := internal.NewSlicePointer(valueBytes)
+	valuePtr := intern.NewSlicePointer(valueBytes)
 
 	err := m.lookup(key, valuePtr)
 	if errors.Is(err, ErrKeyNotExist) {
@@ -477,7 +477,7 @@ func (m *Map) LookupBytes(key interface{}) ([]byte, error) {
 	return valueBytes, err
 }
 
-func (m *Map) lookup(key interface{}, valueOut internal.Pointer) error {
+func (m *Map) lookup(key interface{}, valueOut intern.Pointer) error {
 	keyPtr, err := m.marshalKey(key)
 	if err != nil {
 		return fmt.Errorf("can't marshal key: %w", err)
@@ -571,7 +571,7 @@ func (m *Map) NextKey(key, nextKeyOut interface{}) error {
 // Returns nil if there are no more keys.
 func (m *Map) NextKeyBytes(key interface{}) ([]byte, error) {
 	nextKey := make([]byte, m.keySize)
-	nextKeyPtr := internal.NewSlicePointer(nextKey)
+	nextKeyPtr := intern.NewSlicePointer(nextKey)
 
 	err := m.nextKey(key, nextKeyPtr)
 	if errors.Is(err, ErrKeyNotExist) {
@@ -581,9 +581,9 @@ func (m *Map) NextKeyBytes(key interface{}) ([]byte, error) {
 	return nextKey, err
 }
 
-func (m *Map) nextKey(key interface{}, nextKeyOut internal.Pointer) error {
+func (m *Map) nextKey(key interface{}, nextKeyOut intern.Pointer) error {
 	var (
-		keyPtr internal.Pointer
+		keyPtr intern.Pointer
 		err    error
 	)
 
@@ -611,7 +611,7 @@ func (m *Map) nextKey(key interface{}, nextKeyOut internal.Pointer) error {
 // the end of all possible results, even when partial results
 // are returned. It should be used to evaluate when lookup is "done".
 func (m *Map) BatchLookup(prevKey, nextKeyOut, keysOut, valuesOut interface{}, opts *BatchOptions) (int, error) {
-	return m.batchLookup(internal.BPF_MAP_LOOKUP_BATCH, prevKey, nextKeyOut, keysOut, valuesOut, opts)
+	return m.batchLookup(intern.BPF_MAP_LOOKUP_BATCH, prevKey, nextKeyOut, keysOut, valuesOut, opts)
 }
 
 // BatchLookupAndDelete looks up many elements in a map at once,
@@ -626,10 +626,10 @@ func (m *Map) BatchLookup(prevKey, nextKeyOut, keysOut, valuesOut interface{}, o
 // the end of all possible results, even when partial results
 // are returned. It should be used to evaluate when lookup is "done".
 func (m *Map) BatchLookupAndDelete(prevKey, nextKeyOut, keysOut, valuesOut interface{}, opts *BatchOptions) (int, error) {
-	return m.batchLookup(internal.BPF_MAP_LOOKUP_AND_DELETE_BATCH, prevKey, nextKeyOut, keysOut, valuesOut, opts)
+	return m.batchLookup(intern.BPF_MAP_LOOKUP_AND_DELETE_BATCH, prevKey, nextKeyOut, keysOut, valuesOut, opts)
 }
 
-func (m *Map) batchLookup(cmd internal.BPFCmd, startKey, nextKeyOut, keysOut, valuesOut interface{}, opts *BatchOptions) (int, error) {
+func (m *Map) batchLookup(cmd intern.BPFCmd, startKey, nextKeyOut, keysOut, valuesOut interface{}, opts *BatchOptions) (int, error) {
 	if err := haveBatchAPI(); err != nil {
 		return 0, err
 	}
@@ -649,12 +649,12 @@ func (m *Map) batchLookup(cmd internal.BPFCmd, startKey, nextKeyOut, keysOut, va
 		return 0, fmt.Errorf("keysOut and valuesOut must be the same length")
 	}
 	keyBuf := make([]byte, count*int(m.keySize))
-	keyPtr := internal.NewSlicePointer(keyBuf)
+	keyPtr := intern.NewSlicePointer(keyBuf)
 	valueBuf := make([]byte, count*int(m.fullValueSize))
-	valuePtr := internal.NewSlicePointer(valueBuf)
+	valuePtr := intern.NewSlicePointer(valueBuf)
 
 	var (
-		startPtr internal.Pointer
+		startPtr intern.Pointer
 		err      error
 		retErr   error
 	)
@@ -710,7 +710,7 @@ func (m *Map) BatchUpdate(keys, values interface{}, opts *BatchOptions) (int, er
 	}
 	var (
 		count    = keysValue.Len()
-		valuePtr internal.Pointer
+		valuePtr intern.Pointer
 		err      error
 	)
 	if count != valuesValue.Len() {
@@ -724,8 +724,8 @@ func (m *Map) BatchUpdate(keys, values interface{}, opts *BatchOptions) (int, er
 	if err != nil {
 		return 0, err
 	}
-	var nilPtr internal.Pointer
-	ct, err := bpfMapBatch(internal.BPF_MAP_UPDATE_BATCH, m.fd, nilPtr, nilPtr, keyPtr, valuePtr, uint32(count), opts)
+	var nilPtr intern.Pointer
+	ct, err := bpfMapBatch(intern.BPF_MAP_UPDATE_BATCH, m.fd, nilPtr, nilPtr, keyPtr, valuePtr, uint32(count), opts)
 	return int(ct), err
 }
 
@@ -747,8 +747,8 @@ func (m *Map) BatchDelete(keys interface{}, opts *BatchOptions) (int, error) {
 	if err != nil {
 		return 0, fmt.Errorf("cannot marshal keys: %v", err)
 	}
-	var nilPtr internal.Pointer
-	ct, err := bpfMapBatch(internal.BPF_MAP_DELETE_BATCH, m.fd, nilPtr, nilPtr, keyPtr, nilPtr, uint32(count), opts)
+	var nilPtr intern.Pointer
+	ct, err := bpfMapBatch(intern.BPF_MAP_DELETE_BATCH, m.fd, nilPtr, nilPtr, keyPtr, nilPtr, uint32(count), opts)
 	return int(ct), err
 }
 
@@ -826,7 +826,7 @@ func (m *Map) Clone() (*Map, error) {
 //
 // This requires bpffs to be mounted above fileName. See https://docs.cilium.io/en/k8s-doc/admin/#admin-mount-bpffs
 func (m *Map) Pin(fileName string) error {
-	if err := internal.Pin(m.pinnedPath, fileName, m.fd); err != nil {
+	if err := intern.Pin(m.pinnedPath, fileName, m.fd); err != nil {
 		return err
 	}
 	m.pinnedPath = fileName
@@ -839,7 +839,7 @@ func (m *Map) Pin(fileName string) error {
 //
 // Unpinning an unpinned Map returns nil.
 func (m *Map) Unpin() error {
-	if err := internal.Unpin(m.pinnedPath); err != nil {
+	if err := intern.Unpin(m.pinnedPath); err != nil {
 		return err
 	}
 	m.pinnedPath = ""
@@ -874,13 +874,13 @@ func (m *Map) populate(contents []MapKV) error {
 	return nil
 }
 
-func (m *Map) marshalKey(data interface{}) (internal.Pointer, error) {
+func (m *Map) marshalKey(data interface{}) (intern.Pointer, error) {
 	if data == nil {
 		if m.keySize == 0 {
 			// Queues have a key length of zero, so passing nil here is valid.
-			return internal.NewPointer(nil), nil
+			return intern.NewPointer(nil), nil
 		}
-		return internal.Pointer{}, errors.New("can't use nil as key of map")
+		return intern.Pointer{}, errors.New("can't use nil as key of map")
 	}
 
 	return marshalPtr(data, int(m.keySize))
@@ -895,7 +895,7 @@ func (m *Map) unmarshalKey(data interface{}, buf []byte) error {
 	return unmarshalBytes(data, buf)
 }
 
-func (m *Map) marshalValue(data interface{}) (internal.Pointer, error) {
+func (m *Map) marshalValue(data interface{}) (intern.Pointer, error) {
 	if m.typ.hasPerCPUValue() {
 		return marshalPerCPUValue(data, int(m.valueSize))
 	}
@@ -908,13 +908,13 @@ func (m *Map) marshalValue(data interface{}) (internal.Pointer, error) {
 	switch value := data.(type) {
 	case *Map:
 		if !m.typ.canStoreMap() {
-			return internal.Pointer{}, fmt.Errorf("can't store map in %s", m.typ)
+			return intern.Pointer{}, fmt.Errorf("can't store map in %s", m.typ)
 		}
 		buf, err = marshalMap(value, int(m.valueSize))
 
 	case *Program:
 		if !m.typ.canStoreProgram() {
-			return internal.Pointer{}, fmt.Errorf("can't store program in %s", m.typ)
+			return intern.Pointer{}, fmt.Errorf("can't store program in %s", m.typ)
 		}
 		buf, err = marshalProgram(value, int(m.valueSize))
 
@@ -923,10 +923,10 @@ func (m *Map) marshalValue(data interface{}) (internal.Pointer, error) {
 	}
 
 	if err != nil {
-		return internal.Pointer{}, err
+		return intern.Pointer{}, err
 	}
 
-	return internal.NewSlicePointer(buf), nil
+	return intern.NewSlicePointer(buf), nil
 }
 
 func (m *Map) unmarshalValue(value interface{}, buf []byte) error {
@@ -990,7 +990,7 @@ func (m *Map) unmarshalValue(value interface{}, buf []byte) error {
 
 // LoadPinnedMap loads a Map from a BPF file.
 func LoadPinnedMap(fileName string, opts *LoadPinOptions) (*Map, error) {
-	fd, err := internal.BPFObjGet(fileName, opts.Marshal())
+	fd, err := intern.BPFObjGet(fileName, opts.Marshal())
 	if err != nil {
 		return nil, err
 	}
@@ -1009,7 +1009,7 @@ func unmarshalMap(buf []byte) (*Map, error) {
 		return nil, errors.New("map id requires 4 byte value")
 	}
 
-	id := internal.NativeEndian.Uint32(buf)
+	id := intern.NativeEndian.Uint32(buf)
 	return NewMapFromID(MapID(id))
 }
 
@@ -1025,7 +1025,7 @@ func marshalMap(m *Map, length int) ([]byte, error) {
 	}
 
 	buf := make([]byte, 4)
-	internal.NativeEndian.PutUint32(buf, fd)
+	intern.NativeEndian.PutUint32(buf, fd)
 	return buf, nil
 }
 
@@ -1177,7 +1177,7 @@ func (mi *MapIterator) Err() error {
 //
 // Returns ErrNotExist, if there is no next eBPF map.
 func MapGetNextID(startID MapID) (MapID, error) {
-	id, err := objGetNextID(internal.BPF_MAP_GET_NEXT_ID, uint32(startID))
+	id, err := objGetNextID(intern.BPF_MAP_GET_NEXT_ID, uint32(startID))
 	return MapID(id), err
 }
 
@@ -1185,7 +1185,7 @@ func MapGetNextID(startID MapID) (MapID, error) {
 //
 // Returns ErrNotExist, if there is no eBPF map with the given id.
 func NewMapFromID(id MapID) (*Map, error) {
-	fd, err := bpfObjGetFDByID(internal.BPF_MAP_GET_FD_BY_ID, uint32(id))
+	fd, err := bpfObjGetFDByID(intern.BPF_MAP_GET_FD_BY_ID, uint32(id))
 	if err != nil {
 		return nil, err
 	}

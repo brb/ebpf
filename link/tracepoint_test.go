@@ -6,8 +6,8 @@ import (
 
 	"github.com/cilium/ebpf"
 	"github.com/cilium/ebpf/asm"
-	"github.com/cilium/ebpf/internal"
-	"github.com/cilium/ebpf/internal/testutils"
+	"github.com/cilium/ebpf/intern"
+	"github.com/cilium/ebpf/intern/testutils"
 
 	qt "github.com/frankban/quicktest"
 )
@@ -71,7 +71,7 @@ func TestTraceGetEventID(t *testing.T) {
 	}
 
 	_, err = getTraceEventID("totally", "bogus")
-	if !errors.Is(err, internal.ErrNotSupported) {
+	if !errors.Is(err, intern.ErrNotSupported) {
 		t.Fatal("Doesn't return ErrNotSupported")
 	}
 }

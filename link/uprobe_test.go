@@ -9,7 +9,7 @@ import (
 	qt "github.com/frankban/quicktest"
 
 	"github.com/cilium/ebpf"
-	"github.com/cilium/ebpf/internal/testutils"
+	"github.com/cilium/ebpf/intern/testutils"
 )
 
 var bashEx, _ = OpenExecutable("/bin/bash")

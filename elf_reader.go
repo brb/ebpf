@@ -13,15 +13,15 @@ import (
 	"strings"
 
 	"github.com/cilium/ebpf/asm"
-	"github.com/cilium/ebpf/internal"
-	"github.com/cilium/ebpf/internal/btf"
-	"github.com/cilium/ebpf/internal/unix"
+	"github.com/cilium/ebpf/intern"
+	"github.com/cilium/ebpf/intern/btf"
+	"github.com/cilium/ebpf/intern/unix"
 )
 
 // elfCode is a convenience to reduce the amount of arguments that have to
 // be passed around explicitly. You should treat it's contents as immutable.
 type elfCode struct {
-	*internal.SafeELFFile
+	*intern.SafeELFFile
 	sections map[elf.SectionIndex]*elfSection
 	license  string
 	version  uint32
@@ -45,7 +45,7 @@ func LoadCollectionSpec(file string) (*CollectionSpec, error) {
 
 // LoadCollectionSpecFromReader parses an ELF file into a CollectionSpec.
 func LoadCollectionSpecFromReader(rd io.ReaderAt) (*CollectionSpec, error) {
-	f, err := internal.NewSafeELFFile(rd)
+	f, err := intern.NewSafeELFFile(rd)
 	if err != nil {
 		return nil, err
 	}
@@ -513,7 +513,7 @@ func (ec *elfCode) loadMaps(maps map[string]*MapSpec) error {
 				return fmt.Errorf("map %v: missing flags", mapSym)
 			}
 
-			if _, err := io.Copy(internal.DiscardZeroes{}, lr); err != nil {
+			if _, err := io.Copy(intern.DiscardZeroes{}, lr); err != nil {
 				return fmt.Errorf("map %v: unknown and non-zero fields in definition", mapSym)
 			}
 
@@ -534,9 +534,9 @@ func (ec *elfCode) loadBTFMaps(maps map[string]*MapSpec) error {
 			return fmt.Errorf("missing BTF")
 		}
 
-		_, err := io.Copy(internal.DiscardZeroes{}, bufio.NewReader(sec.Open()))
+		_, err := io.Copy(intern.DiscardZeroes{}, bufio.NewReader(sec.Open()))
 		if err != nil {
-			return fmt.Errorf("section %v: initializing BTF map definitions: %w", sec.Name, internal.ErrNotSupported)
+			return fmt.Errorf("section %v: initializing BTF map definitions: %w", sec.Name, intern.ErrNotSupported)
 		}
 
 		var ds btf.Datasec

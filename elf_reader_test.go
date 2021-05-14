@@ -9,10 +9,10 @@ import (
 	"syscall"
 	"testing"
 
-	"github.com/cilium/ebpf/internal"
-	"github.com/cilium/ebpf/internal/btf"
-	"github.com/cilium/ebpf/internal/testutils"
-	"github.com/cilium/ebpf/internal/unix"
+	"github.com/cilium/ebpf/intern"
+	"github.com/cilium/ebpf/intern/btf"
+	"github.com/cilium/ebpf/intern/testutils"
+	"github.com/cilium/ebpf/intern/unix"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
@@ -149,7 +149,7 @@ func TestLoadCollectionSpec(t *testing.T) {
 			t.Errorf("MapSpec mismatch (-want +got):\n%s", diff)
 		}
 
-		if have.Programs["xdp_prog"].ByteOrder != internal.NativeEndian {
+		if have.Programs["xdp_prog"].ByteOrder != intern.NativeEndian {
 			return
 		}
 
@@ -232,7 +232,7 @@ func TestLoadInitializedBTFMap(t *testing.T) {
 	testutils.Files(t, testutils.Glob(t, "testdata/initialized_btf_map-*.elf"), func(t *testing.T, file string) {
 		_, err := LoadCollectionSpec(file)
 		t.Log(err)
-		if !errors.Is(err, internal.ErrNotSupported) {
+		if !errors.Is(err, intern.ErrNotSupported) {
 			t.Fatal("Loading an initialized BTF map should be unsupported")
 		}
 	})
@@ -257,7 +257,7 @@ func TestLoadRawTracepoint(t *testing.T) {
 			t.Fatal("Can't parse ELF:", err)
 		}
 
-		if spec.Programs["sched_process_exec"].ByteOrder != internal.NativeEndian {
+		if spec.Programs["sched_process_exec"].ByteOrder != intern.NativeEndian {
 			return
 		}
 

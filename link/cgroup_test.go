@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/cilium/ebpf"
-	"github.com/cilium/ebpf/internal/testutils"
+	"github.com/cilium/ebpf/intern/testutils"
 )
 
 func TestAttachCgroup(t *testing.T) {

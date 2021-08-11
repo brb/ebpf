@@ -503,6 +503,19 @@ func (s *Spec) FindType(name string, typ Type) error {
 	return nil
 }
 
+func (s *Spec) Iterate(fn func(Type), filterType Type) {
+	var wanted = reflect.TypeOf(filterType)
+
+	for _, types := range s.namedTypes {
+		for _, typ := range types {
+			if reflect.TypeOf(typ) != wanted {
+				continue
+			}
+			fn(typ)
+		}
+	}
+}
+
 // Handle is a reference to BTF loaded into the kernel.
 type Handle struct {
 	spec *Spec

@@ -17,9 +17,9 @@ import (
 	qt "github.com/frankban/quicktest"
 
 	"github.com/cilium/ebpf/asm"
-	"github.com/cilium/ebpf/internal"
-	"github.com/cilium/ebpf/internal/testutils"
-	"github.com/cilium/ebpf/internal/unix"
+	"github.com/cilium/ebpf/pkg"
+	"github.com/cilium/ebpf/pkg/testutils"
+	"github.com/cilium/ebpf/pkg/unix"
 )
 
 func TestProgramRun(t *testing.T) {
@@ -324,7 +324,7 @@ func TestProgramVerifierOutput(t *testing.T) {
 		t.Fatal("Expected an error from invalid program")
 	}
 
-	var ve *internal.VerifierError
+	var ve *pkg.VerifierError
 	if !errors.As(err, &ve) {
 		t.Error("Error is not a VerifierError")
 	}
@@ -360,7 +360,7 @@ func TestProgramName(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if name := internal.CString(info.name[:]); name != "test" {
+	if name := pkg.CString(info.name[:]); name != "test" {
 		t.Errorf("Name is not test, got '%s'", name)
 	}
 }
@@ -545,7 +545,7 @@ func TestProgramRejectIncorrectByteOrder(t *testing.T) {
 	spec := socketFilterSpec.Copy()
 
 	spec.ByteOrder = binary.BigEndian
-	if internal.NativeEndian == binary.BigEndian {
+	if pkg.NativeEndian == binary.BigEndian {
 		spec.ByteOrder = binary.LittleEndian
 	}
 

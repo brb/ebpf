@@ -13,17 +13,17 @@ import (
 	"syscall"
 	"testing"
 
-	"github.com/cilium/ebpf/internal"
-	"github.com/cilium/ebpf/internal/btf"
-	"github.com/cilium/ebpf/internal/testutils"
-	"github.com/cilium/ebpf/internal/unix"
+	"github.com/cilium/ebpf/pkg"
+	"github.com/cilium/ebpf/pkg/btf"
+	"github.com/cilium/ebpf/pkg/testutils"
+	"github.com/cilium/ebpf/pkg/unix"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 )
 
 func TestLoadCollectionSpec(t *testing.T) {
-	cpus, err := internal.PossibleCPUs()
+	cpus, err := pkg.PossibleCPUs()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -176,7 +176,7 @@ func TestLoadCollectionSpec(t *testing.T) {
 			t.Errorf("MapSpec mismatch (-want +got):\n%s", diff)
 		}
 
-		if have.ByteOrder != internal.NativeEndian {
+		if have.ByteOrder != pkg.NativeEndian {
 			return
 		}
 
@@ -207,7 +207,7 @@ func TestLoadCollectionSpec(t *testing.T) {
 }
 
 func TestDataSections(t *testing.T) {
-	file := fmt.Sprintf("testdata/loader-%s.elf", internal.ClangEndian)
+	file := fmt.Sprintf("testdata/loader-%s.elf", pkg.ClangEndian)
 	coll, err := LoadCollectionSpec(file)
 	if err != nil {
 		t.Fatal(err)
@@ -237,7 +237,7 @@ func TestDataSections(t *testing.T) {
 }
 
 func TestInlineASMConstant(t *testing.T) {
-	file := fmt.Sprintf("testdata/loader-%s.elf", internal.ClangEndian)
+	file := fmt.Sprintf("testdata/loader-%s.elf", pkg.ClangEndian)
 	coll, err := LoadCollectionSpec(file)
 	if err != nil {
 		t.Fatal(err)
@@ -378,7 +378,7 @@ func TestLoadInvalidInitializedBTFMap(t *testing.T) {
 	testutils.Files(t, testutils.Glob(t, "testdata/invalid_btf_map_init-*.elf"), func(t *testing.T, file string) {
 		_, err := LoadCollectionSpec(file)
 		t.Log(err)
-		if !errors.Is(err, internal.ErrNotSupported) {
+		if !errors.Is(err, pkg.ErrNotSupported) {
 			t.Fatal("Loading an initialized BTF map should be unsupported")
 		}
 	})
@@ -403,7 +403,7 @@ func TestLoadRawTracepoint(t *testing.T) {
 			t.Fatal("Can't parse ELF:", err)
 		}
 
-		if spec.ByteOrder != internal.NativeEndian {
+		if spec.ByteOrder != pkg.NativeEndian {
 			return
 		}
 
@@ -428,7 +428,7 @@ func TestTailCall(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		if spec.ByteOrder != internal.NativeEndian {
+		if spec.ByteOrder != pkg.NativeEndian {
 			return
 		}
 
@@ -472,7 +472,7 @@ func TestIPRoute2Compat(t *testing.T) {
 			t.Fatal("Can't parse ELF:", err)
 		}
 
-		if spec.ByteOrder != internal.NativeEndian {
+		if spec.ByteOrder != pkg.NativeEndian {
 			return
 		}
 

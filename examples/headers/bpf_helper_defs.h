@@ -168,7 +168,7 @@ static long (*bpf_trace_printk)(const char *fmt, __u32 fmt_size, ...) = (void *)
  * 	Get a pseudo-random number.
  *
  * 	From a security point of view, this helper uses its own
- * 	pseudo-random internal state, and cannot be used to infer the
+ * 	pseudo-random pkg state, and cannot be used to infer the
  * 	seed of other random functions in the kernel. However, it is
  * 	essential to note that the generator used by the helper is not
  * 	cryptographically secure.
@@ -612,7 +612,7 @@ static long (*bpf_redirect)(__u32 ifindex, __u64 flags) = (void *) 23;
  * 	Retrieving this identifier works with the clsact TC egress hook
  * 	(see also **tc-bpf(8)**), or alternatively on conventional
  * 	classful egress qdiscs, but not on TC ingress path. In case of
- * 	clsact TC egress hook, this has the advantage that, internally,
+ * 	clsact TC egress hook, this has the advantage that, pkgly,
  * 	the destination entry has not been dropped yet in the transmit
  * 	path. Therefore, the destination entry does not need to be
  * 	artificially held via **netif_keep_dst**\ () for a classful
@@ -1560,7 +1560,7 @@ static long (*bpf_msg_redirect_map)(struct sk_msg_md *msg, void *map, __u32 key,
  * 	  overhead.
  *
  * 	When called from within an eBPF program, the helper sets a
- * 	counter internal to the BPF infrastructure, that is used to
+ * 	counter pkg to the BPF infrastructure, that is used to
  * 	apply the last verdict to the next *bytes*. If *bytes* is
  * 	smaller than the current data being processed from a
  * 	**sendmsg**\ () or **sendfile**\ () system call, the first
@@ -1571,7 +1571,7 @@ static long (*bpf_msg_redirect_map)(struct sk_msg_md *msg, void *map, __u32 key,
  * 	**sendmsg**\ () or **sendfile**\ () calls until *bytes* are
  * 	consumed.
  *
- * 	Note that if a socket closes with the internal counter holding
+ * 	Note that if a socket closes with the pkg counter holding
  * 	a non-zero value, this is not a problem because data is not
  * 	being buffered for *bytes* and is sent as it is received.
  *

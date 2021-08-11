@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	// Raise RLIMIT_MEMLOCK
-	_ "github.com/cilium/ebpf/internal/testutils"
+	_ "github.com/cilium/ebpf/pkg/testutils"
 )
 
 func TestLoadingSpec(t *testing.T) {

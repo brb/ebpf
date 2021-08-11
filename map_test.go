@@ -13,10 +13,10 @@ import (
 	"unsafe"
 
 	"github.com/cilium/ebpf/asm"
-	"github.com/cilium/ebpf/internal"
-	"github.com/cilium/ebpf/internal/btf"
-	"github.com/cilium/ebpf/internal/testutils"
-	"github.com/cilium/ebpf/internal/unix"
+	"github.com/cilium/ebpf/pkg"
+	"github.com/cilium/ebpf/pkg/btf"
+	"github.com/cilium/ebpf/pkg/testutils"
+	"github.com/cilium/ebpf/pkg/unix"
 
 	qt "github.com/frankban/quicktest"
 )
@@ -269,11 +269,11 @@ func TestMapClose(t *testing.T) {
 		t.Fatal("Can't close map:", err)
 	}
 
-	if err := m.Put(uint32(0), uint32(42)); !errors.Is(err, internal.ErrClosedFd) {
+	if err := m.Put(uint32(0), uint32(42)); !errors.Is(err, pkg.ErrClosedFd) {
 		t.Fatal("Put doesn't check for closed fd", err)
 	}
 
-	if _, err := m.LookupBytes(uint32(0)); !errors.Is(err, internal.ErrClosedFd) {
+	if _, err := m.LookupBytes(uint32(0)); !errors.Is(err, pkg.ErrClosedFd) {
 		t.Fatal("Get doesn't check for closed fd", err)
 	}
 }
@@ -986,7 +986,7 @@ func TestIterateMapInMap(t *testing.T) {
 func TestPerCPUMarshaling(t *testing.T) {
 	for _, typ := range []MapType{PerCPUHash, PerCPUArray, LRUCPUHash} {
 		t.Run(typ.String(), func(t *testing.T) {
-			numCPU, err := internal.PossibleCPUs()
+			numCPU, err := pkg.PossibleCPUs()
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -1041,7 +1041,7 @@ type bpfCgroupStorageKey struct {
 }
 
 func TestCgroupPerCPUStorageMarshaling(t *testing.T) {
-	numCPU, err := internal.PossibleCPUs()
+	numCPU, err := pkg.PossibleCPUs()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1081,24 +1081,24 @@ func TestCgroupPerCPUStorageMarshaling(t *testing.T) {
 	}
 	defer prog.Close()
 
-	progAttachAttrs := internal.BPFProgAttachAttr{
+	progAttachAttrs := pkg.BPFProgAttachAttr{
 		TargetFd:     uint32(cgroup.Fd()),
 		AttachBpfFd:  uint32(prog.FD()),
 		AttachType:   uint32(AttachCGroupInetEgress),
 		AttachFlags:  0,
 		ReplaceBpfFd: 0,
 	}
-	err = internal.BPFProgAttach(&progAttachAttrs)
+	err = pkg.BPFProgAttach(&progAttachAttrs)
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer func() {
-		attr := internal.BPFProgDetachAttr{
+		attr := pkg.BPFProgDetachAttr{
 			TargetFd:    uint32(cgroup.Fd()),
 			AttachBpfFd: uint32(prog.FD()),
 			AttachType:  uint32(AttachCGroupInetEgress),
 		}
-		if err := internal.BPFProgDetach(&attr); err != nil {
+		if err := pkg.BPFProgDetach(&attr); err != nil {
 			t.Fatal(err)
 		}
 	}()
@@ -1200,7 +1200,7 @@ func TestMapName(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if name := internal.CString(info.name[:]); name != "test" {
+	if name := pkg.CString(info.name[:]); name != "test" {
 		t.Error("Expected name to be test, got", name)
 	}
 }
@@ -1416,21 +1416,21 @@ type benchValue struct {
 type customBenchValue benchValue
 
 func (cbv *customBenchValue) UnmarshalBinary(buf []byte) error {
-	cbv.ID = internal.NativeEndian.Uint32(buf)
-	cbv.Val16 = internal.NativeEndian.Uint16(buf[4:])
-	cbv.Val16_2 = internal.NativeEndian.Uint16(buf[6:])
+	cbv.ID = pkg.NativeEndian.Uint32(buf)
+	cbv.Val16 = pkg.NativeEndian.Uint16(buf[4:])
+	cbv.Val16_2 = pkg.NativeEndian.Uint16(buf[6:])
 	copy(cbv.Name[:], buf[8:])
-	cbv.LID = internal.NativeEndian.Uint64(buf[16:])
+	cbv.LID = pkg.NativeEndian.Uint64(buf[16:])
 	return nil
 }
 
 func (cbv *customBenchValue) MarshalBinary() ([]byte, error) {
 	buf := make([]byte, 24)
-	internal.NativeEndian.PutUint32(buf, cbv.ID)
-	internal.NativeEndian.PutUint16(buf[4:], cbv.Val16)
-	internal.NativeEndian.PutUint16(buf[6:], cbv.Val16_2)
+	pkg.NativeEndian.PutUint32(buf, cbv.ID)
+	pkg.NativeEndian.PutUint16(buf[4:], cbv.Val16)
+	pkg.NativeEndian.PutUint16(buf[6:], cbv.Val16_2)
 	copy(buf[8:], cbv.Name[:])
-	internal.NativeEndian.PutUint64(buf[16:], cbv.LID)
+	pkg.NativeEndian.PutUint64(buf[16:], cbv.LID)
 	return buf, nil
 }
 

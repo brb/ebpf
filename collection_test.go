@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/cilium/ebpf/asm"
-	"github.com/cilium/ebpf/internal/testutils"
+	"github.com/cilium/ebpf/pkg/testutils"
 )
 
 func TestCollectionSpecNotModified(t *testing.T) {

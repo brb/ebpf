@@ -5,7 +5,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/cilium/ebpf/internal/testutils"
+	"github.com/cilium/ebpf/pkg/testutils"
 	qt "github.com/frankban/quicktest"
 )
 

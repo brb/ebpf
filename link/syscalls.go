@@ -6,8 +6,8 @@ import (
 
 	"github.com/cilium/ebpf"
 	"github.com/cilium/ebpf/asm"
-	"github.com/cilium/ebpf/internal"
-	"github.com/cilium/ebpf/internal/unix"
+	"github.com/cilium/ebpf/pkg"
+	"github.com/cilium/ebpf/pkg/unix"
 )
 
 // Type is the kind of link.
@@ -26,7 +26,7 @@ const (
 	XDPType
 )
 
-var haveProgAttach = internal.FeatureTest("BPF_PROG_ATTACH", "4.10", func() error {
+var haveProgAttach = pkg.FeatureTest("BPF_PROG_ATTACH", "4.10", func() error {
 	prog, err := ebpf.NewProgram(&ebpf.ProgramSpec{
 		Type:       ebpf.CGroupSKB,
 		AttachType: ebpf.AttachCGroupInetIngress,
@@ -37,7 +37,7 @@ var haveProgAttach = internal.FeatureTest("BPF_PROG_ATTACH", "4.10", func() erro
 		},
 	})
 	if err != nil {
-		return internal.ErrNotSupported
+		return pkg.ErrNotSupported
 	}
 
 	// BPF_PROG_ATTACH was introduced at the same time as CGgroupSKB,
@@ -47,7 +47,7 @@ var haveProgAttach = internal.FeatureTest("BPF_PROG_ATTACH", "4.10", func() erro
 	return nil
 })
 
-var haveProgAttachReplace = internal.FeatureTest("BPF_PROG_ATTACH atomic replacement", "5.5", func() error {
+var haveProgAttachReplace = pkg.FeatureTest("BPF_PROG_ATTACH atomic replacement", "5.5", func() error {
 	if err := haveProgAttach(); err != nil {
 		return err
 	}
@@ -62,14 +62,14 @@ var haveProgAttachReplace = internal.FeatureTest("BPF_PROG_ATTACH atomic replace
 		},
 	})
 	if err != nil {
-		return internal.ErrNotSupported
+		return pkg.ErrNotSupported
 	}
 	defer prog.Close()
 
 	// We know that we have BPF_PROG_ATTACH since we can load CGroupSKB programs.
 	// If passing BPF_F_REPLACE gives us EINVAL we know that the feature isn't
 	// present.
-	attr := internal.BPFProgAttachAttr{
+	attr := pkg.BPFProgAttachAttr{
 		// We rely on this being checked after attachFlags.
 		TargetFd:    ^uint32(0),
 		AttachBpfFd: uint32(prog.FD()),
@@ -77,9 +77,9 @@ var haveProgAttachReplace = internal.FeatureTest("BPF_PROG_ATTACH atomic replace
 		AttachFlags: uint32(flagReplace),
 	}
 
-	err = internal.BPFProgAttach(&attr)
+	err = pkg.BPFProgAttach(&attr)
 	if errors.Is(err, unix.EINVAL) {
-		return internal.ErrNotSupported
+		return pkg.ErrNotSupported
 	}
 	if errors.Is(err, unix.EBADF) {
 		return nil
@@ -95,12 +95,12 @@ type bpfLinkCreateAttr struct {
 	targetBTFID uint32
 }
 
-func bpfLinkCreate(attr *bpfLinkCreateAttr) (*internal.FD, error) {
-	ptr, err := internal.BPF(internal.BPF_LINK_CREATE, unsafe.Pointer(attr), unsafe.Sizeof(*attr))
+func bpfLinkCreate(attr *bpfLinkCreateAttr) (*pkg.FD, error) {
+	ptr, err := pkg.BPF(pkg.BPF_LINK_CREATE, unsafe.Pointer(attr), unsafe.Sizeof(*attr))
 	if err != nil {
 		return nil, err
 	}
-	return internal.NewFD(uint32(ptr)), nil
+	return pkg.NewFD(uint32(ptr)), nil
 }
 
 type bpfLinkCreateIterAttr struct {
@@ -108,16 +108,16 @@ type bpfLinkCreateIterAttr struct {
 	target_fd     uint32
 	attach_type   ebpf.AttachType
 	flags         uint32
-	iter_info     internal.Pointer
+	iter_info     pkg.Pointer
 	iter_info_len uint32
 }
 
-func bpfLinkCreateIter(attr *bpfLinkCreateIterAttr) (*internal.FD, error) {
-	ptr, err := internal.BPF(internal.BPF_LINK_CREATE, unsafe.Pointer(attr), unsafe.Sizeof(*attr))
+func bpfLinkCreateIter(attr *bpfLinkCreateIterAttr) (*pkg.FD, error) {
+	ptr, err := pkg.BPF(pkg.BPF_LINK_CREATE, unsafe.Pointer(attr), unsafe.Sizeof(*attr))
 	if err != nil {
 		return nil, err
 	}
-	return internal.NewFD(uint32(ptr)), nil
+	return pkg.NewFD(uint32(ptr)), nil
 }
 
 type bpfLinkUpdateAttr struct {
@@ -128,11 +128,11 @@ type bpfLinkUpdateAttr struct {
 }
 
 func bpfLinkUpdate(attr *bpfLinkUpdateAttr) error {
-	_, err := internal.BPF(internal.BPF_LINK_UPDATE, unsafe.Pointer(attr), unsafe.Sizeof(*attr))
+	_, err := pkg.BPF(pkg.BPF_LINK_UPDATE, unsafe.Pointer(attr), unsafe.Sizeof(*attr))
 	return err
 }
 
-var haveBPFLink = internal.FeatureTest("bpf_link", "5.7", func() error {
+var haveBPFLink = pkg.FeatureTest("bpf_link", "5.7", func() error {
 	prog, err := ebpf.NewProgram(&ebpf.ProgramSpec{
 		Type:       ebpf.CGroupSKB,
 		AttachType: ebpf.AttachCGroupInetIngress,
@@ -143,7 +143,7 @@ var haveBPFLink = internal.FeatureTest("bpf_link", "5.7", func() error {
 		},
 	})
 	if err != nil {
-		return internal.ErrNotSupported
+		return pkg.ErrNotSupported
 	}
 	defer prog.Close()
 
@@ -155,7 +155,7 @@ var haveBPFLink = internal.FeatureTest("bpf_link", "5.7", func() error {
 	}
 	_, err = bpfLinkCreate(&attr)
 	if errors.Is(err, unix.EINVAL) {
-		return internal.ErrNotSupported
+		return pkg.ErrNotSupported
 	}
 	if errors.Is(err, unix.EBADF) {
 		return nil
@@ -168,24 +168,24 @@ type bpfIterCreateAttr struct {
 	flags  uint32
 }
 
-func bpfIterCreate(attr *bpfIterCreateAttr) (*internal.FD, error) {
-	ptr, err := internal.BPF(internal.BPF_ITER_CREATE, unsafe.Pointer(attr), unsafe.Sizeof(*attr))
+func bpfIterCreate(attr *bpfIterCreateAttr) (*pkg.FD, error) {
+	ptr, err := pkg.BPF(pkg.BPF_ITER_CREATE, unsafe.Pointer(attr), unsafe.Sizeof(*attr))
 	if err == nil {
-		return internal.NewFD(uint32(ptr)), nil
+		return pkg.NewFD(uint32(ptr)), nil
 	}
 	return nil, err
 }
 
 type bpfRawTracepointOpenAttr struct {
-	name internal.Pointer
+	name pkg.Pointer
 	fd   uint32
 	_    uint32
 }
 
-func bpfRawTracepointOpen(attr *bpfRawTracepointOpenAttr) (*internal.FD, error) {
-	ptr, err := internal.BPF(internal.BPF_RAW_TRACEPOINT_OPEN, unsafe.Pointer(attr), unsafe.Sizeof(*attr))
+func bpfRawTracepointOpen(attr *bpfRawTracepointOpenAttr) (*pkg.FD, error) {
+	ptr, err := pkg.BPF(pkg.BPF_RAW_TRACEPOINT_OPEN, unsafe.Pointer(attr), unsafe.Sizeof(*attr))
 	if err == nil {
-		return internal.NewFD(uint32(ptr)), nil
+		return pkg.NewFD(uint32(ptr)), nil
 	}
 	return nil, err
 }

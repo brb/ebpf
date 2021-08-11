@@ -32,7 +32,7 @@ type ID uint32
 
 // Spec represents decoded BTF.
 type Spec struct {
-	rawTypes   []rawType
+	RawTypes   []rawType
 	strings    stringTable
 	types      []Type
 	namedTypes map[string][]namedType
@@ -180,7 +180,7 @@ func loadNakedSpec(btf io.ReadSeeker, bo binary.ByteOrder, sectionSizes map[stri
 	}
 
 	return &Spec{
-		rawTypes:   rawTypes,
+		RawTypes:   rawTypes,
 		namedTypes: typesByName,
 		types:      types,
 		strings:    rawStrings,
@@ -377,7 +377,7 @@ func (s *Spec) marshal(opts marshalOpts) ([]byte, error) {
 	_, _ = buf.Write(make([]byte, headerLen))
 
 	// Write type section, just after the header.
-	for _, raw := range s.rawTypes {
+	for _, raw := range s.RawTypes {
 		switch {
 		case opts.StripFuncLinkage && raw.Kind() == kindFunc:
 			raw.SetLinkage(StaticFunc)

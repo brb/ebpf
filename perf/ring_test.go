@@ -6,7 +6,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/cilium/ebpf/internal/unix"
+	"github.com/cilium/ebpf/pkg/unix"
 )
 
 func TestRingBufferReader(t *testing.T) {

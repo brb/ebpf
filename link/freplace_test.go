@@ -4,8 +4,8 @@ import (
 	"testing"
 
 	"github.com/cilium/ebpf"
-	"github.com/cilium/ebpf/internal"
-	"github.com/cilium/ebpf/internal/testutils"
+	"github.com/cilium/ebpf/pkg"
+	"github.com/cilium/ebpf/pkg/testutils"
 )
 
 func TestFreplace(t *testing.T) {
@@ -17,7 +17,7 @@ func TestFreplace(t *testing.T) {
 			t.Fatal("Can't parse ELF:", err)
 		}
 
-		if spec.ByteOrder != internal.NativeEndian {
+		if spec.ByteOrder != pkg.NativeEndian {
 			return
 		}
 

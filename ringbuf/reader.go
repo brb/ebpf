@@ -9,8 +9,8 @@ import (
 	"sync"
 
 	"github.com/cilium/ebpf"
-	"github.com/cilium/ebpf/internal"
-	"github.com/cilium/ebpf/internal/unix"
+	"github.com/cilium/ebpf/pkg"
+	"github.com/cilium/ebpf/pkg/unix"
 )
 
 var (
@@ -57,7 +57,7 @@ type Record struct {
 func readRecord(rd *ringbufEventRing) (r Record, err error) {
 	rd.loadConsumer()
 	var header ringbufHeader
-	err = binary.Read(rd, internal.NativeEndian, &header)
+	err = binary.Read(rd, pkg.NativeEndian, &header)
 	if err == io.EOF {
 		return Record{}, err
 	}
@@ -74,7 +74,7 @@ func readRecord(rd *ringbufEventRing) (r Record, err error) {
 	}
 
 	/* read up to 8 byte alignment */
-	dataLenAligned := uint64(internal.Align(header.dataLen(), 8))
+	dataLenAligned := uint64(pkg.Align(header.dataLen(), 8))
 
 	if header.isDiscard() {
 		// when the record header indicates that the data should be
@@ -188,7 +188,7 @@ func (r *Reader) Close() error {
 
 		// Interrupt Read() via the closeFd event fd.
 		var value [8]byte
-		internal.NativeEndian.PutUint64(value[:], 1)
+		pkg.NativeEndian.PutUint64(value[:], 1)
 
 		if _, err = unix.Write(r.closeFd, value[:]); err != nil {
 			err = fmt.Errorf("can't write event fd: %w", err)

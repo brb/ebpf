@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/cilium/ebpf"
-	"github.com/cilium/ebpf/internal/btf"
+	"github.com/cilium/ebpf/pkg/btf"
 )
 
 type FreplaceLink struct {

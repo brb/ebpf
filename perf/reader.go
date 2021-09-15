@@ -10,8 +10,8 @@ import (
 	"sync"
 
 	"github.com/cilium/ebpf"
-	"github.com/cilium/ebpf/internal"
-	"github.com/cilium/ebpf/internal/unix"
+	"github.com/cilium/ebpf/pkg"
+	"github.com/cilium/ebpf/pkg/unix"
 )
 
 var (
@@ -75,7 +75,7 @@ func readRecordFromRing(ring *perfEventRing) (Record, error) {
 
 func readRecord(rd io.Reader, cpu int) (Record, error) {
 	var header perfEventHeader
-	err := binary.Read(rd, internal.NativeEndian, &header)
+	err := binary.Read(rd, pkg.NativeEndian, &header)
 	if err == io.EOF {
 		return Record{}, errEOR
 	}
@@ -105,7 +105,7 @@ func readLostRecords(rd io.Reader) (uint64, error) {
 		Lost uint64
 	}
 
-	err := binary.Read(rd, internal.NativeEndian, &lostHeader)
+	err := binary.Read(rd, pkg.NativeEndian, &lostHeader)
 	if err != nil {
 		return 0, fmt.Errorf("can't read lost records header: %v", err)
 	}
@@ -116,7 +116,7 @@ func readLostRecords(rd io.Reader) (uint64, error) {
 func readRawSample(rd io.Reader) ([]byte, error) {
 	// This must match 'struct perf_event_sample in kernel sources.
 	var size uint32
-	if err := binary.Read(rd, internal.NativeEndian, &size); err != nil {
+	if err := binary.Read(rd, pkg.NativeEndian, &size); err != nil {
 		return nil, fmt.Errorf("can't read sample size: %v", err)
 	}
 
@@ -272,7 +272,7 @@ func (pr *Reader) Close() error {
 
 		// Interrupt Read() via the event fd.
 		var value [8]byte
-		internal.NativeEndian.PutUint64(value[:], 1)
+		pkg.NativeEndian.PutUint64(value[:], 1)
 		_, err = unix.Write(pr.closeFd, value[:])
 		if err != nil {
 			err = fmt.Errorf("can't write event fd: %v", err)

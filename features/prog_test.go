@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/cilium/ebpf"
-	"github.com/cilium/ebpf/internal/testutils"
+	"github.com/cilium/ebpf/pkg/testutils"
 )
 
 var progTypeMinVersion = map[ebpf.ProgramType]string{

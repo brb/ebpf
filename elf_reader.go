@@ -14,15 +14,15 @@ import (
 	"strings"
 
 	"github.com/cilium/ebpf/asm"
-	"github.com/cilium/ebpf/internal"
-	"github.com/cilium/ebpf/internal/btf"
-	"github.com/cilium/ebpf/internal/unix"
+	"github.com/cilium/ebpf/pkg"
+	"github.com/cilium/ebpf/pkg/btf"
+	"github.com/cilium/ebpf/pkg/unix"
 )
 
 // elfCode is a convenience to reduce the amount of arguments that have to
 // be passed around explicitly. You should treat its contents as immutable.
 type elfCode struct {
-	*internal.SafeELFFile
+	*pkg.SafeELFFile
 	sections map[elf.SectionIndex]*elfSection
 	license  string
 	version  uint32
@@ -46,7 +46,7 @@ func LoadCollectionSpec(file string) (*CollectionSpec, error) {
 
 // LoadCollectionSpecFromReader parses an ELF file into a CollectionSpec.
 func LoadCollectionSpecFromReader(rd io.ReaderAt) (*CollectionSpec, error) {
-	f, err := internal.NewSafeELFFile(rd)
+	f, err := pkg.NewSafeELFFile(rd)
 	if err != nil {
 		return nil, err
 	}
@@ -577,9 +577,9 @@ func (ec *elfCode) loadBTFMaps(maps map[string]*MapSpec) error {
 			// declaration, so read the corresponding amount of bytes from the ELF.
 			// This way, we can pinpoint which map declaration contains unexpected
 			// (and therefore unsupported) data.
-			_, err := io.Copy(internal.DiscardZeroes{}, io.LimitReader(rs, int64(vs.Size)))
+			_, err := io.Copy(pkg.DiscardZeroes{}, io.LimitReader(rs, int64(vs.Size)))
 			if err != nil {
-				return fmt.Errorf("section %v: map %s: initializing BTF map definitions: %w", sec.Name, name, internal.ErrNotSupported)
+				return fmt.Errorf("section %v: map %s: initializing BTF map definitions: %w", sec.Name, name, pkg.ErrNotSupported)
 			}
 
 			if maps[name] != nil {

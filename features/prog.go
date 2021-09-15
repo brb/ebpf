@@ -9,8 +9,8 @@ import (
 
 	"github.com/cilium/ebpf"
 	"github.com/cilium/ebpf/asm"
-	"github.com/cilium/ebpf/internal"
-	"github.com/cilium/ebpf/internal/unix"
+	"github.com/cilium/ebpf/pkg"
+	"github.com/cilium/ebpf/pkg/unix"
 )
 
 func init() {
@@ -26,7 +26,7 @@ type progCache struct {
 	progTypes map[ebpf.ProgramType]error
 }
 
-func createProgLoadAttr(pt ebpf.ProgramType) (*internal.BPFProgLoadAttr, error) {
+func createProgLoadAttr(pt ebpf.ProgramType) (*pkg.BPFProgLoadAttr, error) {
 	var expectedAttachType ebpf.AttachType
 
 	insns := asm.Instructions{
@@ -35,12 +35,12 @@ func createProgLoadAttr(pt ebpf.ProgramType) (*internal.BPFProgLoadAttr, error) 
 	}
 
 	buf := bytes.NewBuffer(make([]byte, 0, len(insns)*asm.InstructionSize))
-	if err := insns.Marshal(buf, internal.NativeEndian); err != nil {
+	if err := insns.Marshal(buf, pkg.NativeEndian); err != nil {
 		return nil, err
 	}
 
 	bytecode := buf.Bytes()
-	instructions := internal.NewSlicePointer(bytecode)
+	instructions := pkg.NewSlicePointer(bytecode)
 
 	// Some programs have expected attach types which are checked during the
 	// BPD_PROG_LOAD syscall.
@@ -58,18 +58,18 @@ func createProgLoadAttr(pt ebpf.ProgramType) (*internal.BPFProgLoadAttr, error) 
 	// Kernels before 5.0 (6c4fc209fcf9 "bpf: remove useless version check for prog load")
 	// require the version field to be set to the value of the KERNEL_VERSION
 	// macro for kprobe-type programs.
-	v, err := internal.KernelVersion()
+	v, err := pkg.KernelVersion()
 	if err != nil {
 		return nil, fmt.Errorf("detecting kernel version: %w", err)
 	}
 	kv := v.Kernel()
 
-	return &internal.BPFProgLoadAttr{
+	return &pkg.BPFProgLoadAttr{
 		ProgType:           uint32(pt),
 		Instructions:       instructions,
 		InsCount:           uint32(len(bytecode) / asm.InstructionSize),
 		ExpectedAttachType: uint32(expectedAttachType),
-		License:            internal.NewStringPointer("GPL"),
+		License:            pkg.NewStringPointer("GPL"),
 		KernelVersion:      kv,
 	}, nil
 }
@@ -123,7 +123,7 @@ func haveProgType(pt ebpf.ProgramType) error {
 		return fmt.Errorf("couldn't create the program load attribute: %w", err)
 	}
 
-	_, err = internal.BPFProgLoad(attr)
+	_, err = pkg.BPFProgLoad(attr)
 
 	switch {
 	// EINVAL occurs when attempting to create a program with an unknown type.

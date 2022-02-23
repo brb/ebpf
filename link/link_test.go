@@ -10,9 +10,9 @@ import (
 
 	"github.com/cilium/ebpf"
 	"github.com/cilium/ebpf/asm"
-	"github.com/cilium/ebpf/internal/sys"
-	"github.com/cilium/ebpf/internal/testutils"
-	"github.com/cilium/ebpf/internal/unix"
+	"github.com/cilium/ebpf/pkg/sys"
+	"github.com/cilium/ebpf/pkg/testutils"
+	"github.com/cilium/ebpf/pkg/unix"
 )
 
 func TestRawLink(t *testing.T) {

@@ -6,14 +6,14 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/cilium/ebpf/internal"
-	"github.com/cilium/ebpf/internal/sys"
-	"github.com/cilium/ebpf/internal/unix"
+	"github.com/cilium/ebpf/pkg"
+	"github.com/cilium/ebpf/pkg/sys"
+	"github.com/cilium/ebpf/pkg/unix"
 )
 
 var (
-	unsupportedMemcgAccounting = &internal.UnsupportedFeatureError{
-		MinimumVersion: internal.Version{5, 11, 0},
+	unsupportedMemcgAccounting = &pkg.UnsupportedFeatureError{
+		MinimumVersion: pkg.Version{5, 11, 0},
 		Name:           "memcg-based accounting for BPF memory",
 	}
 	haveMemcgAccounting error

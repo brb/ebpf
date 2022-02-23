@@ -26,8 +26,8 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/cilium/ebpf/internal"
-	"github.com/cilium/ebpf/internal/unix"
+	"github.com/cilium/ebpf/pkg"
+	"github.com/cilium/ebpf/pkg/unix"
 	"github.com/cilium/ebpf/link"
 	"github.com/cilium/ebpf/ringbuf"
 	"github.com/cilium/ebpf/rlimit"
@@ -55,7 +55,7 @@ func (e *Event) UnmarshalBinary(b []byte) error {
 
 	e.Comm = unix.ByteSliceToString(b[:16])
 
-	e.SPort = internal.NativeEndian.Uint16(b[16:18])
+	e.SPort = pkg.NativeEndian.Uint16(b[16:18])
 	e.DPort = binary.BigEndian.Uint16(b[18:20])
 
 	e.SAddr = binary.BigEndian.Uint32(b[20:24])

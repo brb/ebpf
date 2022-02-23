@@ -7,9 +7,9 @@ import (
 	"os"
 
 	"github.com/cilium/ebpf/asm"
-	"github.com/cilium/ebpf/internal"
-	"github.com/cilium/ebpf/internal/sys"
-	"github.com/cilium/ebpf/internal/unix"
+	"github.com/cilium/ebpf/pkg"
+	"github.com/cilium/ebpf/pkg/sys"
+	"github.com/cilium/ebpf/pkg/unix"
 )
 
 // ErrNotExist is returned when loading a non-existing map or program.
@@ -38,7 +38,7 @@ func invalidBPFObjNameChar(char rune) bool {
 	}
 }
 
-var haveNestedMaps = internal.FeatureTest("nested maps", "4.12", func() error {
+var haveNestedMaps = pkg.FeatureTest("nested maps", "4.12", func() error {
 	_, err := sys.MapCreate(&sys.MapCreateAttr{
 		MapType:    sys.MapType(ArrayOfMaps),
 		KeySize:    4,
@@ -48,7 +48,7 @@ var haveNestedMaps = internal.FeatureTest("nested maps", "4.12", func() error {
 		InnerMapFd: ^uint32(0),
 	})
 	if errors.Is(err, unix.EINVAL) {
-		return internal.ErrNotSupported
+		return pkg.ErrNotSupported
 	}
 	if errors.Is(err, unix.EBADF) {
 		return nil
@@ -56,7 +56,7 @@ var haveNestedMaps = internal.FeatureTest("nested maps", "4.12", func() error {
 	return err
 })
 
-var haveMapMutabilityModifiers = internal.FeatureTest("read- and write-only maps", "5.2", func() error {
+var haveMapMutabilityModifiers = pkg.FeatureTest("read- and write-only maps", "5.2", func() error {
 	// This checks BPF_F_RDONLY_PROG and BPF_F_WRONLY_PROG. Since
 	// BPF_MAP_FREEZE appeared in 5.2 as well we don't do a separate check.
 	m, err := sys.MapCreate(&sys.MapCreateAttr{
@@ -67,13 +67,13 @@ var haveMapMutabilityModifiers = internal.FeatureTest("read- and write-only maps
 		MapFlags:   unix.BPF_F_RDONLY_PROG,
 	})
 	if err != nil {
-		return internal.ErrNotSupported
+		return pkg.ErrNotSupported
 	}
 	_ = m.Close()
 	return nil
 })
 
-var haveMmapableMaps = internal.FeatureTest("mmapable maps", "5.5", func() error {
+var haveMmapableMaps = pkg.FeatureTest("mmapable maps", "5.5", func() error {
 	// This checks BPF_F_MMAPABLE, which appeared in 5.5 for array maps.
 	m, err := sys.MapCreate(&sys.MapCreateAttr{
 		MapType:    sys.MapType(Array),
@@ -83,13 +83,13 @@ var haveMmapableMaps = internal.FeatureTest("mmapable maps", "5.5", func() error
 		MapFlags:   unix.BPF_F_MMAPABLE,
 	})
 	if err != nil {
-		return internal.ErrNotSupported
+		return pkg.ErrNotSupported
 	}
 	_ = m.Close()
 	return nil
 })
 
-var haveInnerMaps = internal.FeatureTest("inner maps", "5.10", func() error {
+var haveInnerMaps = pkg.FeatureTest("inner maps", "5.10", func() error {
 	// This checks BPF_F_INNER_MAP, which appeared in 5.10.
 	m, err := sys.MapCreate(&sys.MapCreateAttr{
 		MapType:    sys.MapType(Array),
@@ -99,13 +99,13 @@ var haveInnerMaps = internal.FeatureTest("inner maps", "5.10", func() error {
 		MapFlags:   unix.BPF_F_INNER_MAP,
 	})
 	if err != nil {
-		return internal.ErrNotSupported
+		return pkg.ErrNotSupported
 	}
 	_ = m.Close()
 	return nil
 })
 
-var haveNoPreallocMaps = internal.FeatureTest("prealloc maps", "4.6", func() error {
+var haveNoPreallocMaps = pkg.FeatureTest("prealloc maps", "4.6", func() error {
 	// This checks BPF_F_NO_PREALLOC, which appeared in 4.6.
 	m, err := sys.MapCreate(&sys.MapCreateAttr{
 		MapType:    sys.MapType(Hash),
@@ -115,7 +115,7 @@ var haveNoPreallocMaps = internal.FeatureTest("prealloc maps", "4.6", func() err
 		MapFlags:   unix.BPF_F_NO_PREALLOC,
 	})
 	if err != nil {
-		return internal.ErrNotSupported
+		return pkg.ErrNotSupported
 	}
 	_ = m.Close()
 	return nil
@@ -145,7 +145,7 @@ func wrapMapError(err error) error {
 	return err
 }
 
-var haveObjName = internal.FeatureTest("object names", "4.15", func() error {
+var haveObjName = pkg.FeatureTest("object names", "4.15", func() error {
 	attr := sys.MapCreateAttr{
 		MapType:    sys.MapType(Array),
 		KeySize:    4,
@@ -156,14 +156,14 @@ var haveObjName = internal.FeatureTest("object names", "4.15", func() error {
 
 	fd, err := sys.MapCreate(&attr)
 	if err != nil {
-		return internal.ErrNotSupported
+		return pkg.ErrNotSupported
 	}
 
 	_ = fd.Close()
 	return nil
 })
 
-var objNameAllowsDot = internal.FeatureTest("dot in object names", "5.2", func() error {
+var objNameAllowsDot = pkg.FeatureTest("dot in object names", "5.2", func() error {
 	if err := haveObjName(); err != nil {
 		return err
 	}
@@ -178,14 +178,14 @@ var objNameAllowsDot = internal.FeatureTest("dot in object names", "5.2", func()
 
 	fd, err := sys.MapCreate(&attr)
 	if err != nil {
-		return internal.ErrNotSupported
+		return pkg.ErrNotSupported
 	}
 
 	_ = fd.Close()
 	return nil
 })
 
-var haveBatchAPI = internal.FeatureTest("map batch api", "5.6", func() error {
+var haveBatchAPI = pkg.FeatureTest("map batch api", "5.6", func() error {
 	var maxEntries uint32 = 2
 	attr := sys.MapCreateAttr{
 		MapType:    sys.MapType(Hash),
@@ -196,7 +196,7 @@ var haveBatchAPI = internal.FeatureTest("map batch api", "5.6", func() error {
 
 	fd, err := sys.MapCreate(&attr)
 	if err != nil {
-		return internal.ErrNotSupported
+		return pkg.ErrNotSupported
 	}
 	defer fd.Close()
 
@@ -212,12 +212,12 @@ var haveBatchAPI = internal.FeatureTest("map batch api", "5.6", func() error {
 		Count:  maxEntries,
 	})
 	if err != nil {
-		return internal.ErrNotSupported
+		return pkg.ErrNotSupported
 	}
 	return nil
 })
 
-var haveProbeReadKernel = internal.FeatureTest("bpf_probe_read_kernel", "5.5", func() error {
+var haveProbeReadKernel = pkg.FeatureTest("bpf_probe_read_kernel", "5.5", func() error {
 	insns := asm.Instructions{
 		asm.Mov.Reg(asm.R1, asm.R10),
 		asm.Add.Imm(asm.R1, -8),
@@ -227,7 +227,7 @@ var haveProbeReadKernel = internal.FeatureTest("bpf_probe_read_kernel", "5.5", f
 		asm.Return(),
 	}
 	buf := bytes.NewBuffer(make([]byte, 0, insns.Size()))
-	if err := insns.Marshal(buf, internal.NativeEndian); err != nil {
+	if err := insns.Marshal(buf, pkg.NativeEndian); err != nil {
 		return err
 	}
 	bytecode := buf.Bytes()
@@ -239,7 +239,7 @@ var haveProbeReadKernel = internal.FeatureTest("bpf_probe_read_kernel", "5.5", f
 		InsnCnt:  uint32(len(bytecode) / asm.InstructionSize),
 	})
 	if err != nil {
-		return internal.ErrNotSupported
+		return pkg.ErrNotSupported
 	}
 	_ = fd.Close()
 	return nil

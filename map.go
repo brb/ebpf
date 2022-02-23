@@ -12,10 +12,10 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/cilium/ebpf/internal"
-	"github.com/cilium/ebpf/internal/btf"
-	"github.com/cilium/ebpf/internal/sys"
-	"github.com/cilium/ebpf/internal/unix"
+	"github.com/cilium/ebpf/pkg"
+	"github.com/cilium/ebpf/pkg/btf"
+	"github.com/cilium/ebpf/pkg/sys"
+	"github.com/cilium/ebpf/pkg/unix"
 )
 
 // Errors returned by Map and MapIterator methods.
@@ -113,7 +113,7 @@ func (ms *MapSpec) clampPerfEventArraySize() error {
 		return nil
 	}
 
-	n, err := internal.PossibleCPUs()
+	n, err := pkg.PossibleCPUs()
 	if err != nil {
 		return fmt.Errorf("perf event array: %w", err)
 	}
@@ -323,7 +323,7 @@ func (spec *MapSpec) createMap(inner *sys.FD, opts MapOptions, handles *handleCa
 	// In order to support loading these definitions, tolerate the presence of
 	// extra bytes, but require them to be zeroes.
 	if spec.Extra != nil {
-		if _, err := io.Copy(internal.DiscardZeroes{}, spec.Extra); err != nil {
+		if _, err := io.Copy(pkg.DiscardZeroes{}, spec.Extra); err != nil {
 			return nil, errors.New("extra contains unhandled non-zero bytes, drain before creating map")
 		}
 	}
@@ -351,7 +351,7 @@ func (spec *MapSpec) createMap(inner *sys.FD, opts MapOptions, handles *handleCa
 		spec.ValueSize = 4
 
 		if spec.MaxEntries == 0 {
-			n, err := internal.PossibleCPUs()
+			n, err := pkg.PossibleCPUs()
 			if err != nil {
 				return nil, fmt.Errorf("perf event array: %w", err)
 			}
@@ -449,12 +449,12 @@ func newMap(fd *sys.FD, name string, typ MapType, keySize, valueSize, maxEntries
 		return m, nil
 	}
 
-	possibleCPUs, err := internal.PossibleCPUs()
+	possibleCPUs, err := pkg.PossibleCPUs()
 	if err != nil {
 		return nil, err
 	}
 
-	m.fullValueSize = internal.Align(int(valueSize), 8) * possibleCPUs
+	m.fullValueSize = pkg.Align(int(valueSize), 8) * possibleCPUs
 	return m, nil
 }
 
@@ -1055,7 +1055,7 @@ func (m *Map) Clone() (*Map, error) {
 //
 // This requires bpffs to be mounted above fileName. See https://docs.cilium.io/en/k8s-doc/admin/#admin-mount-bpffs
 func (m *Map) Pin(fileName string) error {
-	if err := internal.Pin(m.pinnedPath, fileName, m.fd); err != nil {
+	if err := pkg.Pin(m.pinnedPath, fileName, m.fd); err != nil {
 		return err
 	}
 	m.pinnedPath = fileName
@@ -1068,7 +1068,7 @@ func (m *Map) Pin(fileName string) error {
 //
 // Unpinning an unpinned Map returns nil.
 func (m *Map) Unpin() error {
-	if err := internal.Unpin(m.pinnedPath); err != nil {
+	if err := pkg.Unpin(m.pinnedPath); err != nil {
 		return err
 	}
 	m.pinnedPath = ""
@@ -1254,7 +1254,7 @@ func unmarshalMap(buf []byte) (*Map, error) {
 		return nil, errors.New("map id requires 4 byte value")
 	}
 
-	id := internal.NativeEndian.Uint32(buf)
+	id := pkg.NativeEndian.Uint32(buf)
 	return NewMapFromID(MapID(id))
 }
 
@@ -1265,7 +1265,7 @@ func marshalMap(m *Map, length int) ([]byte, error) {
 	}
 
 	buf := make([]byte, 4)
-	internal.NativeEndian.PutUint32(buf, m.fd.Uint())
+	pkg.NativeEndian.PutUint32(buf, m.fd.Uint())
 	return buf, nil
 }
 

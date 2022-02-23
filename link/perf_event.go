@@ -13,8 +13,8 @@ import (
 	"unsafe"
 
 	"github.com/cilium/ebpf"
-	"github.com/cilium/ebpf/internal/sys"
-	"github.com/cilium/ebpf/internal/unix"
+	"github.com/cilium/ebpf/pkg/sys"
+	"github.com/cilium/ebpf/pkg/unix"
 )
 
 // Getting the terminology right is usually the hardest part. For posterity and

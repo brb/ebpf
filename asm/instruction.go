@@ -10,7 +10,7 @@ import (
 	"math"
 	"strings"
 
-	"github.com/cilium/ebpf/internal/unix"
+	"github.com/cilium/ebpf/pkg/unix"
 )
 
 // InstructionSize is the size of a BPF instruction in bytes

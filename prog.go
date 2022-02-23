@@ -12,14 +12,14 @@ import (
 	"time"
 
 	"github.com/cilium/ebpf/asm"
-	"github.com/cilium/ebpf/internal"
-	"github.com/cilium/ebpf/internal/btf"
-	"github.com/cilium/ebpf/internal/sys"
-	"github.com/cilium/ebpf/internal/unix"
+	"github.com/cilium/ebpf/pkg"
+	"github.com/cilium/ebpf/pkg/btf"
+	"github.com/cilium/ebpf/pkg/sys"
+	"github.com/cilium/ebpf/pkg/unix"
 )
 
 // ErrNotSupported is returned whenever the kernel doesn't support a feature.
-var ErrNotSupported = internal.ErrNotSupported
+var ErrNotSupported = pkg.ErrNotSupported
 
 // ProgramID represents the unique ID of an eBPF program.
 type ProgramID uint32
@@ -117,7 +117,7 @@ func (ps *ProgramSpec) Copy() *ProgramSpec {
 //
 // Use asm.Instructions.Tag if you need to calculate for non-native endianness.
 func (ps *ProgramSpec) Tag() (string, error) {
-	return ps.Instructions.Tag(internal.NativeEndian)
+	return ps.Instructions.Tag(pkg.NativeEndian)
 }
 
 // flatten returns spec's full instruction stream including all of its
@@ -247,8 +247,8 @@ func newProgramWithOptions(spec *ProgramSpec, opts ProgramOptions, handles *hand
 		return nil, errors.New("can't load program of unspecified type")
 	}
 
-	if spec.ByteOrder != nil && spec.ByteOrder != internal.NativeEndian {
-		return nil, fmt.Errorf("can't load %s program on %s", spec.ByteOrder, internal.NativeEndian)
+	if spec.ByteOrder != nil && spec.ByteOrder != pkg.NativeEndian {
+		return nil, fmt.Errorf("can't load %s program on %s", spec.ByteOrder, pkg.NativeEndian)
 	}
 
 	// Kernels before 5.0 (6c4fc209fcf9 "bpf: remove useless version check for prog load")
@@ -256,8 +256,8 @@ func newProgramWithOptions(spec *ProgramSpec, opts ProgramOptions, handles *hand
 	// macro for kprobe-type programs.
 	// Overwrite Kprobe program version if set to zero or the magic version constant.
 	kv := spec.KernelVersion
-	if spec.Type == Kprobe && (kv == 0 || kv == internal.MagicKernelVersion) {
-		v, err := internal.KernelVersion()
+	if spec.Type == Kprobe && (kv == 0 || kv == pkg.MagicKernelVersion) {
+		v, err := pkg.KernelVersion()
 		if err != nil {
 			return nil, fmt.Errorf("detecting kernel version: %w", err)
 		}
@@ -335,7 +335,7 @@ func newProgramWithOptions(spec *ProgramSpec, opts ProgramOptions, handles *hand
 	}
 
 	buf := bytes.NewBuffer(make([]byte, 0, insns.Size()))
-	err = insns.Marshal(buf, internal.NativeEndian)
+	err = insns.Marshal(buf, pkg.NativeEndian)
 	if err != nil {
 		return nil, err
 	}
@@ -414,7 +414,7 @@ func newProgramWithOptions(spec *ProgramSpec, opts ProgramOptions, handles *hand
 		return nil, fmt.Errorf("load program: %w (MEMLOCK may be too low, consider rlimit.RemoveMemlock)", logErr)
 	}
 
-	err = internal.ErrorWithLog(err, logBuf, logErr)
+	err = pkg.ErrorWithLog(err, logBuf, logErr)
 	if btfDisabled {
 		return nil, fmt.Errorf("load program without BTF: %w", err)
 	}
@@ -511,7 +511,7 @@ func (p *Program) Clone() (*Program, error) {
 //
 // This requires bpffs to be mounted above fileName. See https://docs.cilium.io/en/k8s-doc/admin/#admin-mount-bpffs
 func (p *Program) Pin(fileName string) error {
-	if err := internal.Pin(p.pinnedPath, fileName, p.fd); err != nil {
+	if err := pkg.Pin(p.pinnedPath, fileName, p.fd); err != nil {
 		return err
 	}
 	p.pinnedPath = fileName
@@ -524,7 +524,7 @@ func (p *Program) Pin(fileName string) error {
 //
 // Unpinning an unpinned Program returns nil.
 func (p *Program) Unpin() error {
-	if err := internal.Unpin(p.pinnedPath); err != nil {
+	if err := pkg.Unpin(p.pinnedPath); err != nil {
 		return err
 	}
 	p.pinnedPath = ""
@@ -579,7 +579,7 @@ func (p *Program) Benchmark(in []byte, repeat int, reset func()) (uint32, time.D
 	return ret, total, nil
 }
 
-var haveProgTestRun = internal.FeatureTest("BPF_PROG_TEST_RUN", "4.12", func() error {
+var haveProgTestRun = pkg.FeatureTest("BPF_PROG_TEST_RUN", "4.12", func() error {
 	prog, err := NewProgram(&ProgramSpec{
 		Type: SocketFilter,
 		Instructions: asm.Instructions{
@@ -606,7 +606,7 @@ var haveProgTestRun = internal.FeatureTest("BPF_PROG_TEST_RUN", "4.12", func() e
 	if errors.Is(err, unix.EINVAL) {
 		// Check for EINVAL specifically, rather than err != nil since we
 		// otherwise misdetect due to insufficient permissions.
-		return internal.ErrNotSupported
+		return pkg.ErrNotSupported
 	}
 	if errors.Is(err, unix.EINTR) {
 		// We know that PROG_TEST_RUN is supported if we get EINTR.
@@ -682,7 +682,7 @@ func unmarshalProgram(buf []byte) (*Program, error) {
 
 	// Looking up an entry in a nested map or prog array returns an id,
 	// not an fd.
-	id := internal.NativeEndian.Uint32(buf)
+	id := pkg.NativeEndian.Uint32(buf)
 	return NewProgramFromID(ProgramID(id))
 }
 
@@ -692,7 +692,7 @@ func marshalProgram(p *Program, length int) ([]byte, error) {
 	}
 
 	buf := make([]byte, 4)
-	internal.NativeEndian.PutUint32(buf, p.fd.Uint())
+	pkg.NativeEndian.PutUint32(buf, p.fd.Uint())
 	return buf, nil
 }
 
@@ -865,7 +865,7 @@ func resolveBTFType(spec *btf.Spec, name string, progType ProgramType, attachTyp
 
 	if err != nil {
 		if errors.Is(err, btf.ErrNotFound) {
-			return nil, &internal.UnsupportedFeatureError{
+			return nil, &pkg.UnsupportedFeatureError{
 				Name: featureName,
 			}
 		}

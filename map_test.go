@@ -12,11 +12,11 @@ import (
 	"unsafe"
 
 	"github.com/cilium/ebpf/asm"
-	"github.com/cilium/ebpf/internal"
-	"github.com/cilium/ebpf/internal/btf"
-	"github.com/cilium/ebpf/internal/sys"
-	"github.com/cilium/ebpf/internal/testutils"
-	"github.com/cilium/ebpf/internal/unix"
+	"github.com/cilium/ebpf/pkg"
+	"github.com/cilium/ebpf/pkg/btf"
+	"github.com/cilium/ebpf/pkg/sys"
+	"github.com/cilium/ebpf/pkg/testutils"
+	"github.com/cilium/ebpf/pkg/unix"
 
 	qt "github.com/frankban/quicktest"
 )
@@ -285,7 +285,7 @@ func TestBatchMapWithLock(t *testing.T) {
 		if err != nil {
 			t.Fatal("Can't parse ELF:", err)
 		}
-		if spec.ByteOrder != internal.NativeEndian {
+		if spec.ByteOrder != pkg.NativeEndian {
 			return
 		}
 
@@ -345,7 +345,7 @@ func TestMapWithLock(t *testing.T) {
 		if err != nil {
 			t.Fatal("Can't parse ELF:", err)
 		}
-		if spec.ByteOrder != internal.NativeEndian {
+		if spec.ByteOrder != pkg.NativeEndian {
 			return
 		}
 
@@ -1303,7 +1303,7 @@ func TestIterateMapInMap(t *testing.T) {
 func TestPerCPUMarshaling(t *testing.T) {
 	for _, typ := range []MapType{PerCPUHash, PerCPUArray, LRUCPUHash} {
 		t.Run(typ.String(), func(t *testing.T) {
-			numCPU, err := internal.PossibleCPUs()
+			numCPU, err := pkg.PossibleCPUs()
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -1361,7 +1361,7 @@ type bpfCgroupStorageKey struct {
 }
 
 func TestCgroupPerCPUStorageMarshaling(t *testing.T) {
-	numCPU, err := internal.PossibleCPUs()
+	numCPU, err := pkg.PossibleCPUs()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1738,21 +1738,21 @@ type benchValue struct {
 type customBenchValue benchValue
 
 func (cbv *customBenchValue) UnmarshalBinary(buf []byte) error {
-	cbv.ID = internal.NativeEndian.Uint32(buf)
-	cbv.Val16 = internal.NativeEndian.Uint16(buf[4:])
-	cbv.Val16_2 = internal.NativeEndian.Uint16(buf[6:])
+	cbv.ID = pkg.NativeEndian.Uint32(buf)
+	cbv.Val16 = pkg.NativeEndian.Uint16(buf[4:])
+	cbv.Val16_2 = pkg.NativeEndian.Uint16(buf[6:])
 	copy(cbv.Name[:], buf[8:])
-	cbv.LID = internal.NativeEndian.Uint64(buf[16:])
+	cbv.LID = pkg.NativeEndian.Uint64(buf[16:])
 	return nil
 }
 
 func (cbv *customBenchValue) MarshalBinary() ([]byte, error) {
 	buf := make([]byte, 24)
-	internal.NativeEndian.PutUint32(buf, cbv.ID)
-	internal.NativeEndian.PutUint16(buf[4:], cbv.Val16)
-	internal.NativeEndian.PutUint16(buf[6:], cbv.Val16_2)
+	pkg.NativeEndian.PutUint32(buf, cbv.ID)
+	pkg.NativeEndian.PutUint16(buf[4:], cbv.Val16)
+	pkg.NativeEndian.PutUint16(buf[6:], cbv.Val16_2)
 	copy(buf[8:], cbv.Name[:])
-	internal.NativeEndian.PutUint64(buf[16:], cbv.LID)
+	pkg.NativeEndian.PutUint64(buf[16:], cbv.LID)
 	return buf, nil
 }
 

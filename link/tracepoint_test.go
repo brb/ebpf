@@ -6,8 +6,8 @@ import (
 	"testing"
 
 	"github.com/cilium/ebpf"
-	"github.com/cilium/ebpf/internal/testutils"
-	"github.com/cilium/ebpf/internal/unix"
+	"github.com/cilium/ebpf/pkg/testutils"
+	"github.com/cilium/ebpf/pkg/unix"
 
 	qt "github.com/frankban/quicktest"
 )

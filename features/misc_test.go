@@ -3,7 +3,7 @@ package features
 import (
 	"testing"
 
-	"github.com/cilium/ebpf/internal/testutils"
+	"github.com/cilium/ebpf/pkg/testutils"
 )
 
 func TestHaveMisc(t *testing.T) {

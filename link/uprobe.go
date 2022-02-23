@@ -10,7 +10,7 @@ import (
 	"sync"
 
 	"github.com/cilium/ebpf"
-	"github.com/cilium/ebpf/internal"
+	"github.com/cilium/ebpf/pkg"
 )
 
 var (
@@ -29,10 +29,10 @@ var (
 	uprobeRefCtrOffsetPMUPath = "/sys/bus/event_source/devices/uprobe/format/ref_ctr_offset"
 	// elixir.bootlin.com/linux/v5.15-rc7/source/kernel/events/core.c#L9799
 	uprobeRefCtrOffsetShift = 32
-	haveRefCtrOffsetPMU     = internal.FeatureTest("RefCtrOffsetPMU", "4.20", func() error {
+	haveRefCtrOffsetPMU     = pkg.FeatureTest("RefCtrOffsetPMU", "4.20", func() error {
 		_, err := os.Stat(uprobeRefCtrOffsetPMUPath)
 		if err != nil {
-			return internal.ErrNotSupported
+			return pkg.ErrNotSupported
 		}
 		return nil
 	})
@@ -88,7 +88,7 @@ func OpenExecutable(path string) (*Executable, error) {
 	}
 	defer f.Close()
 
-	se, err := internal.NewSafeELFFile(f)
+	se, err := pkg.NewSafeELFFile(f)
 	if err != nil {
 		return nil, fmt.Errorf("parse ELF file: %w", err)
 	}
@@ -110,7 +110,7 @@ func OpenExecutable(path string) (*Executable, error) {
 	return &ex, nil
 }
 
-func (ex *Executable) load(f *internal.SafeELFFile) error {
+func (ex *Executable) load(f *pkg.SafeELFFile) error {
 	syms, err := f.Symbols()
 	if err != nil && !errors.Is(err, elf.ErrNoSymbols) {
 		return err

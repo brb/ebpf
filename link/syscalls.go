@@ -5,9 +5,9 @@ import (
 
 	"github.com/cilium/ebpf"
 	"github.com/cilium/ebpf/asm"
-	"github.com/cilium/ebpf/internal"
-	"github.com/cilium/ebpf/internal/sys"
-	"github.com/cilium/ebpf/internal/unix"
+	"github.com/cilium/ebpf/pkg"
+	"github.com/cilium/ebpf/pkg/sys"
+	"github.com/cilium/ebpf/pkg/unix"
 )
 
 // Type is the kind of link.
@@ -24,7 +24,7 @@ const (
 	XDPType           = sys.BPF_LINK_TYPE_XDP
 )
 
-var haveProgAttach = internal.FeatureTest("BPF_PROG_ATTACH", "4.10", func() error {
+var haveProgAttach = pkg.FeatureTest("BPF_PROG_ATTACH", "4.10", func() error {
 	prog, err := ebpf.NewProgram(&ebpf.ProgramSpec{
 		Type:       ebpf.CGroupSKB,
 		AttachType: ebpf.AttachCGroupInetIngress,
@@ -35,7 +35,7 @@ var haveProgAttach = internal.FeatureTest("BPF_PROG_ATTACH", "4.10", func() erro
 		},
 	})
 	if err != nil {
-		return internal.ErrNotSupported
+		return pkg.ErrNotSupported
 	}
 
 	// BPF_PROG_ATTACH was introduced at the same time as CGgroupSKB,
@@ -45,7 +45,7 @@ var haveProgAttach = internal.FeatureTest("BPF_PROG_ATTACH", "4.10", func() erro
 	return nil
 })
 
-var haveProgAttachReplace = internal.FeatureTest("BPF_PROG_ATTACH atomic replacement", "5.5", func() error {
+var haveProgAttachReplace = pkg.FeatureTest("BPF_PROG_ATTACH atomic replacement", "5.5", func() error {
 	if err := haveProgAttach(); err != nil {
 		return err
 	}
@@ -60,7 +60,7 @@ var haveProgAttachReplace = internal.FeatureTest("BPF_PROG_ATTACH atomic replace
 		},
 	})
 	if err != nil {
-		return internal.ErrNotSupported
+		return pkg.ErrNotSupported
 	}
 	defer prog.Close()
 
@@ -77,7 +77,7 @@ var haveProgAttachReplace = internal.FeatureTest("BPF_PROG_ATTACH atomic replace
 
 	err = sys.ProgAttach(&attr)
 	if errors.Is(err, unix.EINVAL) {
-		return internal.ErrNotSupported
+		return pkg.ErrNotSupported
 	}
 	if errors.Is(err, unix.EBADF) {
 		return nil
@@ -85,7 +85,7 @@ var haveProgAttachReplace = internal.FeatureTest("BPF_PROG_ATTACH atomic replace
 	return err
 })
 
-var haveBPFLink = internal.FeatureTest("bpf_link", "5.7", func() error {
+var haveBPFLink = pkg.FeatureTest("bpf_link", "5.7", func() error {
 	attr := sys.LinkCreateAttr{
 		// This is a hopefully invalid file descriptor, which triggers EBADF.
 		TargetFd:   ^uint32(0),
@@ -94,7 +94,7 @@ var haveBPFLink = internal.FeatureTest("bpf_link", "5.7", func() error {
 	}
 	_, err := sys.LinkCreate(&attr)
 	if errors.Is(err, unix.EINVAL) {
-		return internal.ErrNotSupported
+		return pkg.ErrNotSupported
 	}
 	if errors.Is(err, unix.EBADF) {
 		return nil

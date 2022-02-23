@@ -9,9 +9,9 @@ import (
 
 	"github.com/cilium/ebpf"
 	"github.com/cilium/ebpf/asm"
-	"github.com/cilium/ebpf/internal"
-	"github.com/cilium/ebpf/internal/sys"
-	"github.com/cilium/ebpf/internal/unix"
+	"github.com/cilium/ebpf/pkg"
+	"github.com/cilium/ebpf/pkg/sys"
+	"github.com/cilium/ebpf/pkg/unix"
 )
 
 func init() {
@@ -37,7 +37,7 @@ func createProgLoadAttr(pt ebpf.ProgramType) (*sys.ProgLoadAttr, error) {
 	}
 
 	buf := bytes.NewBuffer(make([]byte, 0, insns.Size()))
-	if err := insns.Marshal(buf, internal.NativeEndian); err != nil {
+	if err := insns.Marshal(buf, pkg.NativeEndian); err != nil {
 		return nil, err
 	}
 
@@ -62,7 +62,7 @@ func createProgLoadAttr(pt ebpf.ProgramType) (*sys.ProgLoadAttr, error) {
 	// Kernels before 5.0 (6c4fc209fcf9 "bpf: remove useless version check for prog load")
 	// require the version field to be set to the value of the KERNEL_VERSION
 	// macro for kprobe-type programs.
-	v, err := internal.KernelVersion()
+	v, err := pkg.KernelVersion()
 	if err != nil {
 		return nil, fmt.Errorf("detecting kernel version: %w", err)
 	}

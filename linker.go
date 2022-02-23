@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	"github.com/cilium/ebpf/asm"
-	"github.com/cilium/ebpf/internal/btf"
+	"github.com/cilium/ebpf/pkg/btf"
 )
 
 // The linker is responsible for resolving bpf-to-bpf calls between programs

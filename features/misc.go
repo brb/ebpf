@@ -8,9 +8,9 @@ import (
 
 	"github.com/cilium/ebpf"
 	"github.com/cilium/ebpf/asm"
-	"github.com/cilium/ebpf/internal"
-	"github.com/cilium/ebpf/internal/sys"
-	"github.com/cilium/ebpf/internal/unix"
+	"github.com/cilium/ebpf/pkg"
+	"github.com/cilium/ebpf/pkg/sys"
+	"github.com/cilium/ebpf/pkg/unix"
 )
 
 func init() {
@@ -152,7 +152,7 @@ func createMiscProbeAttr(mt miscType) (*sys.ProgLoadAttr, error) {
 	}
 
 	buf := bytes.NewBuffer(make([]byte, 0, insns.Size()))
-	if err := insns.Marshal(buf, internal.NativeEndian); err != nil {
+	if err := insns.Marshal(buf, pkg.NativeEndian); err != nil {
 		return nil, err
 	}
 

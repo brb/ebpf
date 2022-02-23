@@ -14,10 +14,10 @@ import (
 	"unsafe"
 
 	"github.com/cilium/ebpf/asm"
-	"github.com/cilium/ebpf/internal"
-	"github.com/cilium/ebpf/internal/btf"
-	"github.com/cilium/ebpf/internal/sys"
-	"github.com/cilium/ebpf/internal/unix"
+	"github.com/cilium/ebpf/pkg"
+	"github.com/cilium/ebpf/pkg/btf"
+	"github.com/cilium/ebpf/pkg/sys"
+	"github.com/cilium/ebpf/pkg/unix"
 )
 
 // MapInfo describes a map.
@@ -154,9 +154,9 @@ func newProgramInfoFromProc(fd *sys.FD) (*ProgramInfo, error) {
 		"prog_tag":  &info.Tag,
 	})
 	if errors.Is(err, errMissingFields) {
-		return nil, &internal.UnsupportedFeatureError{
+		return nil, &pkg.UnsupportedFeatureError{
 			Name:           "reading program info from /proc/self/fdinfo",
-			MinimumVersion: internal.Version{4, 10, 0},
+			MinimumVersion: pkg.Version{4, 10, 0},
 		}
 	}
 	if err != nil {
@@ -228,7 +228,7 @@ func (pi *ProgramInfo) Instructions() (asm.Instructions, error) {
 
 	r := bytes.NewReader(pi.insns)
 	var insns asm.Instructions
-	if err := insns.Unmarshal(r, internal.NativeEndian); err != nil {
+	if err := insns.Unmarshal(r, pkg.NativeEndian); err != nil {
 		return nil, fmt.Errorf("unmarshaling instructions: %w", err)
 	}
 

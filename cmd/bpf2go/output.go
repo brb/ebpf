@@ -12,8 +12,8 @@ import (
 	"text/template"
 
 	"github.com/cilium/ebpf"
-	"github.com/cilium/ebpf/internal"
-	"github.com/cilium/ebpf/internal/btf"
+	"github.com/cilium/ebpf/pkg"
+	"github.com/cilium/ebpf/pkg/btf"
 )
 
 const ebpfModule = "github.com/cilium/ebpf"
@@ -246,12 +246,12 @@ func output(args outputArgs) error {
 			continue
 		}
 
-		maps[name] = internal.Identifier(name)
+		maps[name] = pkg.Identifier(name)
 	}
 
 	programs := make(map[string]string)
 	for name := range spec.Programs {
-		programs[name] = internal.Identifier(name)
+		programs[name] = pkg.Identifier(name)
 	}
 
 	// Collect any types which we've been asked for explicitly.
@@ -262,7 +262,7 @@ func output(args outputArgs) error {
 
 	typeNames := make(map[btf.Type]string)
 	for _, cType := range cTypes {
-		typeNames[cType] = args.ident + internal.Identifier(cType.TypeName())
+		typeNames[cType] = args.ident + pkg.Identifier(cType.TypeName())
 	}
 
 	// Collect map key and value types, unless we've been asked not to.
@@ -279,7 +279,7 @@ func output(args outputArgs) error {
 				continue
 			}
 
-			typeNames[typ] = args.ident + internal.Identifier(typ.TypeName())
+			typeNames[typ] = args.ident + pkg.Identifier(typ.TypeName())
 		}
 	}
 
@@ -292,7 +292,7 @@ func output(args outputArgs) error {
 
 	gf := &btf.GoFormatter{
 		Names:      typeNames,
-		Identifier: internal.Identifier,
+		Identifier: pkg.Identifier,
 	}
 
 	ctx := struct {
@@ -324,7 +324,7 @@ func output(args outputArgs) error {
 		return fmt.Errorf("can't generate types: %s", err)
 	}
 
-	return internal.WriteFormatted(buf.Bytes(), args.out)
+	return pkg.WriteFormatted(buf.Bytes(), args.out)
 }
 
 func collectCTypes(types *btf.Spec, names []string) ([]btf.Type, error) {

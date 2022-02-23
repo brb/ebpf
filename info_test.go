@@ -7,10 +7,10 @@ import (
 	"testing"
 
 	"github.com/cilium/ebpf/asm"
-	"github.com/cilium/ebpf/internal"
-	"github.com/cilium/ebpf/internal/sys"
-	"github.com/cilium/ebpf/internal/testutils"
-	"github.com/cilium/ebpf/internal/unix"
+	"github.com/cilium/ebpf/pkg"
+	"github.com/cilium/ebpf/pkg/sys"
+	"github.com/cilium/ebpf/pkg/testutils"
+	"github.com/cilium/ebpf/pkg/unix"
 	qt "github.com/frankban/quicktest"
 )
 
@@ -149,7 +149,7 @@ func TestProgramInfoMapIDs(t *testing.T) {
 	qt.Assert(t, err, qt.IsNil)
 
 	ids, ok := info.MapIDs()
-	if testutils.MustKernelVersion().Less(internal.Version{4, 15, 0}) {
+	if testutils.MustKernelVersion().Less(pkg.Version{4, 15, 0}) {
 		qt.Assert(t, ok, qt.IsFalse)
 		qt.Assert(t, ids, qt.HasLen, 0)
 	} else {

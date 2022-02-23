@@ -10,8 +10,8 @@ import (
 	"strings"
 
 	"github.com/cilium/ebpf/asm"
-	"github.com/cilium/ebpf/internal/btf"
-	"github.com/cilium/ebpf/internal/sys"
+	"github.com/cilium/ebpf/pkg/btf"
+	"github.com/cilium/ebpf/pkg/sys"
 )
 
 // CollectionOptions control loading a collection into the kernel.

@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	"github.com/cilium/ebpf/asm"
-	"github.com/cilium/ebpf/internal"
-	"github.com/cilium/ebpf/internal/testutils"
+	"github.com/cilium/ebpf/pkg"
+	"github.com/cilium/ebpf/pkg/testutils"
 )
 
 func TestFindReferences(t *testing.T) {
@@ -66,7 +66,7 @@ func TestForwardFunctionDeclaration(t *testing.T) {
 
 		testutils.SkipOnOldKernel(t, "4.16", "bpf2bpf calls")
 
-		if coll.ByteOrder != internal.NativeEndian {
+		if coll.ByteOrder != pkg.NativeEndian {
 			return
 		}
 

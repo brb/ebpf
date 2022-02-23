@@ -6,7 +6,7 @@ import (
 	"unsafe"
 
 	"github.com/cilium/ebpf"
-	"github.com/cilium/ebpf/internal/sys"
+	"github.com/cilium/ebpf/pkg/sys"
 )
 
 type IterOptions struct {

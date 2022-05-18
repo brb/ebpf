@@ -342,3 +342,46 @@ func ExampleSpec_TypeByName() {
 	// We've found struct foo
 	fmt.Println(foo.Name)
 }
+
+func TestTypesIterator(t *testing.T) {
+	spec := parseELFBTF(t, "../testdata/loader-el.elf")
+
+	if len(spec.types) < 1 {
+		t.Fatal("Not enough types")
+	}
+
+	// Assertion that 'global_fn' type exists within the spec
+	globalFnType, err := spec.AnyTypeByName("global_fn")
+	if err != nil {
+		t.Fatalf("Failed to find 'global_fn' type by name: %s", err)
+	}
+
+	foundGlobalFnType := false
+	count := 0
+
+	iter := spec.NewTypesIterator()
+	for iter.Next() {
+		if !foundGlobalFnType && iter.Type.TypeName() == "global_fn" {
+			foundGlobalFnType = true
+
+			// Modify the returned copy of the type to check whether the spec
+			// type doesn't get modified too.
+			fnType := iter.Type.(*Func)
+			fnType.Name = "foo"
+			if iter.Type.TypeName() != "foo" {
+				t.Fatal("Failed to change the name of the type")
+			}
+			if globalFnType.TypeName() != "global_fn" {
+				t.Fatal("'global_fn' spec type was modified")
+			}
+		}
+		count += 1
+	}
+
+	if l := len(spec.types); l != count {
+		t.Fatalf("Failed to iterate over all types (%d vs %d)", l, count)
+	}
+	if !foundGlobalFnType {
+		t.Fatal("Couldn't find 'global_fn' type")
+	}
+}
